@@ -1,0 +1,2 @@
+   text	   data	    bss	    dec	    hex	filename
+  72016	   3424	   6188	  81628	  13edc	../ActualActualRobotProject.elf
