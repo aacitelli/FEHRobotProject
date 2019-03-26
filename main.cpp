@@ -1,20 +1,3 @@
-/* Todos (Unordered):
- *
- *  Note: Anything necessary for a performance test should be prioritized. Some of these are just for documentation purposes,
- *  and some are optional features that could make the robot faster or more reliable. Please do stuff relevant to the next performance test if possible.
- *
- *  - Implement timestamping at the beginning of all the SD card lines
- *  - Add a calibration procedure where we figure out the exact points that we need to go to and put the robot there beforehand
- *      - We could also just measure a single point then use that point to figure out how far the course is from the other ones, then adjust all measurements accordingly (ask me to explain this if you want to implement this; Hard to explain in text)
- *      - I think this is our best way of negating the small differences between the courses
- *  - Use dead-reckoning to figure out robot positioning whenever there are flickers in RPS (can compensate for maybe like half a second of RPS downtime, but helps us be way more precise with small flickers)
- *      - Would have to figure out exactly how fast the robot goes, but it's otherwise not hugely complicated and could make our robot better in spotty rps areas like the ramp
- *  - Implement a timeout for the robot starting (maybe like 15 seconds after the RPS check) to avoid a dead robot should the initial trigger fail (which is very, very rare, but worth putting in due to how easy it is to do and how bad it would be if we missed a light check)
- *  - Implement verbosity levels for error reporting (e.g. 1 = Verbose (Everything), 2 = Intermediate (Unintended method behavior, big method results), 3 = Error (Only unintended method behavior output))
- *      - This would actually be pretty helpful. You can do it by using the above scale and wrapping every debug statement in an if(verbosity constant we hardcode in is > the threshold for reporting this) or similar
- *
- * */
-
 // Use 1 course as baseline
 // Offset course based on 4 sampled points
 
@@ -31,19 +14,48 @@
 #include "CustomLibraries/customnavigation.h"
 #include "CustomLibraries/customconstants.h"
 
+/* Stuff I Want To Get Done This Week (Yes, Even Individual):
+ *
+ * HARDWARE (Loosely prioritized)
+ *
+ * - Implement wider surface areas across whatever we possibly can so that button pressing and anything else we need to press is as consistent as possible and works more consistently across all courses
+ * - Make sure everything fits tight and nothing will come loose easily - Needs to be rigid and the motor setup has to be firm and not shaky (as close as we can get it)
+ * - Try making the QR code anchored by a more than a single screw pivot (not sure how we'd do this, but consider it)
+ * - Implement a valley system in the claw to help with our hardest task (foosball)
+ *
+ * SOFTWARE (Strictly prioritized with highest priority first and lowest priority last)
+ *
+ * - Implement code that does the course as consistently as possible - This is mostly just compiling code from our previous tests, but there's a bunch of new stuff too
+ * - Implement RPS Standardization / Calibration Procedure Across All Courses (Helps avoid inconsistency issues)
+ *      - This works by basically using one course as the "base" course and figuring out the average offset from the other courses
+ *      - Going to have to ask a TA about the best way to do this
+ * - Implement a timeout for robot starting (we had that one official performance test where it needed a little bump to get started
+ * - Implement Dead-Reckoning (Guessing where the robot will be during downtime given last angle, position, and time)
+ *      - This will require trig, measurements for how far the robot goes per time interval, and measurements for minor turn amounts
+ *      - This is NOT intended as a serious replacement for deadzone navigation - This just covers up really small RPS inconsistencies (where RPS drops for less than a second)
+ *      - This isn't really a priority to implement, but if done correctly, could bring really small overall improvements that could quickly compound
+ *
+ * */
+
 using namespace std;
 
 void init(); void deinit();
 void loopWhileStartLightIsOff();
 void performanceTest4();
+void finalRoutine();
 void rpsTest();
 void updateLastValidRPSValues();
 void turnSouthAndGoUntilRPS(float startHeading);
+
+void miscTesting()
+{
+}
 
 int main(void)
 {
     init();
 
+    // Our "final action" is pressing the button or w/e to start the course itself
     while (lightSensor.Value() > .45)
     {
         LCD.WriteLine("Waiting for light to turn on.");
@@ -51,11 +63,13 @@ int main(void)
         clearLCD();
     }
 
-    performanceTest4();
+    // Runs any code from the current routine
+    finalRoutine();
 
+    // Shuts down whatever needs shut down at the end of a run
     deinit();
 
-    // Indicates that the program was successfully run
+    // Return value of zero indicates that no unrecoverable errors occurred
     return 0;
 }
 
@@ -67,7 +81,7 @@ void rpsTest()
         LCD.Write("X: "); LCD.WriteLine(RPS.X());
         LCD.Write("Y: "); LCD.WriteLine(RPS.Y());
         LCD.Write("Heading: "); LCD.WriteLine(RPS.Heading());
-        Sleep(.1);
+        Sleep(.2);
     }
 }
 
@@ -75,7 +89,101 @@ float lastValidX, lastValidY, lastValidHeading;
 
 void finalRoutine()
 {
+    // Navigating to the token drop
+    goToPoint(13.4, 24.4, 23.3, true, .5, .75);
 
+    // Dropping the token
+    armServo.SetDegree(120);
+    Sleep(1.0);
+    armServo.SetDegree(30);
+
+    // Navigating to DDR, going right above the left light
+    goToPoint(23.5, 16, 90, true, .5, .75);
+
+    // Backs up onto the light, going until it reaches a certain RPS threshold, keeping itself straight
+    // Todo - Modify this to use backwards goToPoint
+    leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .5);
+    rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .5);
+
+    // Light itself is at roughly y = 12.9, so cut this loop of very slightly early
+    while (RPS.Y() > 13 || RPS.Y() == -1)
+    {
+        // If it's turned too far to the left, have it turn slightly right by having the right motor go a little harder
+        if (RPS.Heading() > 95 && RPS.Heading() < 270)
+        {
+            leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .5);
+            rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .6);
+        }
+
+        // If it's turned too far to the right, have it turn slightly left but having the left motor go a little harder
+        else if (RPS.Heading() < 95 || (RPS.Heading() < 360 && RPS.Heading() >= 270))
+        {
+            leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .6);
+            rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .5);
+        }
+
+        // Otherwise, it should keep going straight
+        else
+        {
+            leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .5);
+            rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .5);
+        }
+    }
+
+    leftMotor.Stop();
+    rightMotor.Stop();
+
+    // Deciding what color the light is and acting conditionally based on which case is true
+    // If inconsistency is an issue, make this take samples over a second and take the average
+    // Blue light is around .83, Red light is around .25 (Keep this line for reference)
+    const float DDR_LIGHT_CUTOFF_VALUE = .5;
+
+    // If the light is blue, do this pathfi`nding and press the blue button
+    if (lightSensor.Value() > DDR_LIGHT_CUTOFF_VALUE)
+    {
+        // Getting set up above the target position
+        goToPoint(28.6, 16, 270, true, .5, .5);
+
+        // Calling goToPoint's backwards counterpart to go towards the button
+        // Y-Coordinate must be far enough that it never passes the tolerance check but close enough that it is accurate enough to accurately pathfind
+        goToPointBackwards(28.6, 12.0, 0.0, false, .5, .5);
+    }
+
+    // Otherwise, the light is red, so do red button pathfinding and press the red button
+    else
+    {
+        // Getting set up above the red stuff
+        goToPoint(23.5, 16, 270, true, .5, .5);
+
+        // Calling goToPoint's backwards counterpart to go towards the button
+        // Y-Coordinate must be far enough that it never passes the tolerance check but close enough that it is accurate enough to accurately pathfind
+        goToPointBackwards(23.5, 12.0, 0.0, false, .5, .5);
+    }
+
+    // Todo - Stop taking points as a percentage of 40% and redo it to take them as a full percentage
+    // Move to bottom of ramp
+    goToPoint(28.75, 16.75, 0.0, false, 1.0, 1.0);
+
+    // Move up ramp and stop somewhere near the top
+    goToPoint(31, 55, 0.0, false, 1.0, 1.0);
+
+    // Positioning for the foosball task
+    goToPoint(22.75, 63.6, 0.0, true, .5, .4);
+
+    // Todo - Implement some sort of deadzone cutoff that automatically turns as accurately as possible to south and goes that direction, then paths to the end button from there
+
+    // Do the foosball task
+    // Todo - Implement this
+
+    // Position for the lever
+
+    // Pull the lever
+
+    // Navigate to the left edge of the course in preparation for the left ramp
+
+    // Go down the left ramp
+
+    // Press the end button
 }
 
 void performanceTest4()
@@ -157,7 +265,7 @@ void performanceTest4()
     goToPoint(6, 8.0, 225, true, 2.0, 1.0);
 
     // Press the end button
-    goToPoint(0.0, 0.0, 0.0, fdswq2alse, 2.0, 1.0);
+    goToPoint(0.0, 0.0, 0.0, false, 2.0, 1.0);
 }
 
 void turnSouthAndGoUntilRPS(float startHeading)
