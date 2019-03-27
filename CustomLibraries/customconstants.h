@@ -39,7 +39,7 @@ DigitalInputPin rightBumpSwitch(FEHIO::P0_3);
 AnalogInputPin lightSensor(FEHIO::P0_0);
 
 // Motor Percentages
-const int LEFT_MOTOR_SIGN_FIX = -1;
+const int LEFT_MOTOR_SIGN_FIX = 1;
 const int RIGHT_MOTOR_SIGN_FIX = 1;
 
 // Left Clockwise, Right CCW
@@ -60,6 +60,8 @@ const float NORTH = 90;
 const float EAST = 0;
 const float SOUTH = 270;
 const float WEST = 180;
+
+bool hasExhaustedDeadzone = false;
 
 // Ending contents of header file
 #endif

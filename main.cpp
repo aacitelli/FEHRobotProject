@@ -9,6 +9,7 @@
 // C/C++ Libaries
 #include <cmath>
 #include <stdlib.h>
+#include <ctime>
 
 // Custom Libraries
 #include "CustomLibraries/customnavigation.h"
@@ -47,20 +48,19 @@ void rpsTest();
 void updateLastValidRPSValues();
 void turnSouthAndGoUntilRPS(float startHeading);
 
-void miscTesting()
-{
-}
-
 int main(void)
 {
     init();
 
     // Our "final action" is pressing the button or w/e to start the course itself
-    while (lightSensor.Value() > .45)
+    // 300 -> Amount of iterations in 30 seconds (max time between start and w/e)
+    int iterationCount = 0;
+    while (lightSensor.Value() > .45 && iterationCount < 300)
     {
         LCD.WriteLine("Waiting for light to turn on.");
         Sleep(.1);
         clearLCD();
+        iterationCount++;
     }
 
     // Runs any code from the current routine
@@ -85,50 +85,25 @@ void rpsTest()
     }
 }
 
-float lastValidX, lastValidY, lastValidHeading;
 
+
+// These points are points I went and measured on whatever course is on the closer half towards the consoles
 void finalRoutine()
 {
     // Navigating to the token drop
-    goToPoint(13.4, 24.4, 23.3, true, .5, .75);
+    // 13.4, x, 23.3 Before
+    goToPoint(16, 24.4, 50.0, true, .5, .75, false, 0.0);
 
     // Dropping the token
     armServo.SetDegree(120);
     Sleep(1.0);
     armServo.SetDegree(30);
 
-    // Navigating to DDR, going right above the left light
-    goToPoint(23.5, 16, 90, true, .5, .75);
+    // Go to the side of one of the lights
+    goToPoint(16, 15, 0.0, false, .75, 1.5, false, 0.0);
 
-    // Backs up onto the light, going until it reaches a certain RPS threshold, keeping itself straight
-    // Todo - Modify this to use backwards goToPoint
-    leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .5);
-    rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .5);
-
-    // Light itself is at roughly y = 12.9, so cut this loop of very slightly early
-    while (RPS.Y() > 13 || RPS.Y() == -1)
-    {
-        // If it's turned too far to the left, have it turn slightly right by having the right motor go a little harder
-        if (RPS.Heading() > 95 && RPS.Heading() < 270)
-        {
-            leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .5);
-            rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .6);
-        }
-
-        // If it's turned too far to the right, have it turn slightly left but having the left motor go a little harder
-        else if (RPS.Heading() < 95 || (RPS.Heading() < 360 && RPS.Heading() >= 270))
-        {
-            leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .6);
-            rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .5);
-        }
-
-        // Otherwise, it should keep going straight
-        else
-        {
-            leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .5);
-            rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .5);
-        }
-    }
+    // Go on top of the near light
+    goToPoint(24.25, 12.5, 0.0, false, .75, .75, false, 0.0);
 
     leftMotor.Stop();
     rightMotor.Stop();
@@ -142,224 +117,67 @@ void finalRoutine()
     if (lightSensor.Value() > DDR_LIGHT_CUTOFF_VALUE)
     {
         // Getting set up above the target position
-        goToPoint(28.6, 16, 270, true, .5, .5);
+        goToPoint(28.6, 16.5, 270, true, .75, .75, false, 0.0);
 
-        // Calling goToPoint's backwards counterpart to go towards the button
-        // Y-Coordinate must be far enough that it never passes the tolerance check but close enough that it is accurate enough to accurately pathfind
-        goToPointBackwards(28.6, 12.0, 0.0, false, .5, .5);
+        // Pressing the button - Precision really matters
+        goToPoint(29.5, 11, 270, false, .75, .5, true, 2.0);
     }
 
     // Otherwise, the light is red, so do red button pathfinding and press the red button
     else
     {
         // Getting set up above the red stuff
-        goToPoint(23.5, 16, 270, true, .5, .5);
+        goToPoint(23.5, 16.5, 270, true, .75, .75, false, 0.0);
 
-        // Calling goToPoint's backwards counterpart to go towards the button
-        // Y-Coordinate must be far enough that it never passes the tolerance check but close enough that it is accurate enough to accurately pathfind
-        goToPointBackwards(23.5, 12.0, 0.0, false, .5, .5);
+        // Pressing the button - Precision really matters
+        goToPoint(23.5, 10, 270, false, .75, .5, true, 2.0);
     }
 
-    // Todo - Stop taking points as a percentage of 40% and redo it to take them as a full percentage
+    // Space and angle for the RPS button
+    goToPoint(24.75, 16.6, 205.0, true, .5, .4, false, 0.0);
+
+    // Press the RPS button
+    armServo.SetDegree(110); Sleep(4.0);
+    armServo.SetDegree(30);
+
     // Move to bottom of ramp
-    goToPoint(28.75, 16.75, 0.0, false, 1.0, 1.0);
+    goToPoint(28.75, 16.75, 0.0, false, 1.0, 1.5, false, 0.0);
 
     // Move up ramp and stop somewhere near the top
-    goToPoint(31, 55, 0.0, false, 1.0, 1.0);
+    goToPoint(31, 55, 0.0, false, 1.0, 1.5, false, 0.0);
 
     // Positioning for the foosball task
-    goToPoint(22.75, 63.6, 0.0, true, .5, .4);
-
-    // Todo - Implement some sort of deadzone cutoff that automatically turns as accurately as possible to south and goes that direction, then paths to the end button from there
-
-    // Do the foosball task
-    // Todo - Implement this
+    if (!hasExhaustedDeadzone)
+        goToPoint(22.75, 63.6, 0.0, true, .5, .5, false, 0.0);
 
     // Position for the lever
+    // Todo - Decide if we want to approach head-on or from the side (from the side would probably be more consistent but would require slightly more precise positioning, I guess
+    if (!hasExhaustedDeadzone)
+        goToPoint(6, 55, 135, true, .75, .75, false, 1.5);
 
     // Pull the lever
-
-    // Navigate to the left edge of the course in preparation for the left ramp
-
-    // Go down the left ramp
-
-    // Press the end button
-}
-
-void performanceTest4()
-{
-    goToPoint(15, 18, 0.0, false, 3.0, 1.0);
-
-    // This was 25.25 and 16.75 before, just incase this proves to be too inaccurate
-    goToPoint(24.75, 16.6, 225.0, true, .3, .5);
-
-    armServo.SetDegree(110);
-    Sleep(4.0);
-
-    armServo.SetDegree(30);
-    Sleep(1.0);
-
-    // Move to bottom of ramp
-    goToPoint(28.75, 16.75, 0.0, false, 1.0, 1.0);
-
-    // Move up ramp and stop somewhere near the top
-    goToPoint(31, 55, 0.0, false, 1.0, 1.0);
-
-    // Positioning for the foosball task
-    goToPoint(22.75, 63.6, 0.0, true, .5, .4);
-
-    armServo.SetDegree(110);
-    Sleep(1.0);
-
-    // The foosball task
-    while ((RPS.X() > 15 || RPS.X() == -1) && RPS.X() != -2)
+    if (!hasExhaustedDeadzone)
     {
-        // If it needs to turn left to keep itself straight
-        if (RPS.Heading() < 355.0 && RPS.Heading() > 310.0)
-        {
-            leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .9);
-            rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * .9);
-        }
-
-        // Otherwise, if it needs to turn right to keep itself straight
-        else if (RPS.Heading() > 5.0 && RPS.Heading() < 50.0)
-        {
-            leftMotor.SetPercent(LEFT_MOTOR_PERCENT * .9);
-            rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .9);
-        }
-
-        // Otherwise, just keep going straight because the heading is alright
-        else
-        {
-            leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .75);
-            rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .75);
-        }
-
-        LCD.Write("Current X: "); LCD.WriteLine(RPS.X());
-        LCD.Write("Current Y: "); LCD.WriteLine(RPS.Y());
-        LCD.Write("Current Heading: "); LCD.WriteLine(RPS.Heading());
-
-        SD.Printf("DURING FOOSBALL: \r\n");
-        SD.Printf("Current X: %f\r\n", RPS.X());
-        SD.Printf("Current Y %f\r\n", RPS.Y());
-        SD.Printf("Current Heading: %f\r\n", RPS.Heading());
-
-        Sleep(.001);
-
-        // Keeps track of the last valid RPS value so that we can intelligently(ish) turn south if something goes wrong
-        updateLastValidRPSValues();
+        armServo.SetDegree(110);
+        Sleep(1.0);
+        armServo.SetDegree(30);
     }
 
-    // Resetting arm servo to a degree that won't bump into anything
-    armServo.SetDegree(30);
-    Sleep(1.0);
-
-    // If it lost RPS in a deadzone, turn as close to south as you can get and go until you get RPS
-    if (RPS.X() == -2)
-        turnSouthAndGoUntilRPS(lastValidHeading);
-
+    /* Stuff from here down is taken directly from PT4 and should be pretty consistent, though the end buttoncould probably use some finesse */
     // Go to (very approximately) the top of the ramp
-    goToPoint(6, 55.0, 0.0, false, 2.0, 1.0);
+    // If it hits the deadzone, it should skip to here within a few seconds after it gets back to RPS
+    goToPoint(6, 55.0, 0.0, false, 2.0, 1.0, false, 0.0);
 
     // Go down the ramp and in front of the end button
-    goToPoint(6, 8.0, 225, true, 2.0, 1.0);
+    goToPoint(6, 8.0, 225, true, 2.0, 1.0, false, 0.0);
 
     // Press the end button
-    goToPoint(0.0, 0.0, 0.0, false, 2.0, 1.0);
+    goToPoint(0.0, 0.0, 0.0, false, 2.0, 1.0, false, 0.0);
 }
 
-void turnSouthAndGoUntilRPS(float startHeading)
-{
-    leftMotor.SetPercent(LEFT_MOTOR_PERCENT);
-    rightMotor.SetPercent(RIGHT_MOTOR_PERCENT);
-
-    Sleep(.5);
-
-    leftMotor.Stop();
-    rightMotor.Stop();
-
-    leftMotor.SetPercent(LEFT_MOTOR_PERCENT * .5);
-    rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .5);
-
-    Sleep(2.0);
-
-    leftMotor.Stop();
-    rightMotor.Stop();
-
-    leftMotor.SetPercent(LEFT_MOTOR_PERCENT);
-    rightMotor.SetPercent(RIGHT_MOTOR_PERCENT);
-
-    while (RPS.X() == -1 || RPS.X() == -2) { Sleep(.001); }
-    Sleep(.5);
-    leftMotor.Stop();
-    rightMotor.Stop();
 
 
-    /*
-    // First Quadrant - More Turning Needed
-    if (startHeading >= 0 && startHeading < 90)
-    {
-        leftMotor.SetPercent(LEFT_MOTOR_PERCENT);
-        rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT);
 
-        Sleep(1.2);
-    }
-
-    // Second Quadrant - More Turning Needed
-    else if (startHeading >= 90 && startHeading < 180)
-    {
-        leftMotor.SetPercent(-LEFT_MOTOR_PERCENT);
-        rightMotor.SetPercent(RIGHT_MOTOR_PERCENT);
-
-        Sleep(1.2);
-    }
-
-    // Third Quadrant - Less Turning Needed
-    else if (startHeading >= 180 && startHeading < 270)
-    {
-        leftMotor.SetPercent(-LEFT_MOTOR_PERCENT);
-        rightMotor.SetPercent(RIGHT_MOTOR_PERCENT);
-
-        Sleep(.4);
-    }
-
-    // Fourth Quadrant - Less Turning Needed
-    else
-    {
-        leftMotor.SetPercent(LEFT_MOTOR_PERCENT);
-        rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT);
-
-        Sleep(.4);
-    }
-
-    leftMotor.Stop();
-    rightMotor.Stop();
-
-    Sleep(.5);
-
-    leftMotor.SetPercent(LEFT_MOTOR_PERCENT);
-    rightMotor.SetPercent(RIGHT_MOTOR_PERCENT);
-
-    while (RPS.X() == -1 || RPS.X() == -2) { Sleep(.001); }
-
-    // Give it a little leeway to make sure it's truly out of the deadzone
-    Sleep(.5);
-
-    leftMotor.Stop();
-    rightMotor.Stop();
-    */
-}
-
-// Updates global variables, but only to "valid" vales (anything that's not "no rps" or a deadzone value
-void updateLastValidRPSValues()
-{
-    if (RPS.X() != -1 && RPS.X() != -2)
-        lastValidX = RPS.X();
-    if (RPS.Y() != -1 && RPS.Y() != -2)
-        lastValidY = RPS.Y();
-    if (RPS.Heading() != -1 && RPS.Heading() != -2)
-        lastValidHeading = RPS.Heading();
-}
 
 // Initializing requisite systems
 void init()
