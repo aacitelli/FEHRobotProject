@@ -47,21 +47,38 @@ void finalRoutine();
 void rpsTest();
 void updateLastValidRPSValues();
 void turnSouthAndGoUntilRPS(float startHeading);
+void calibrate();
 
 int main(void)
 {
+    leftMotor.SetPercent(LEFT_MOTOR_PERCENT * .5);
+    rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .5);
+    Sleep(3.0);
+
+    leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .5);
+    rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * .5);
+    Sleep(3.0);
+
     init();
+    calibrate();
 
     // Our "final action" is pressing the button or w/e to start the course itself
     // 300 -> Amount of iterations in 30 seconds (max time between start and w/e)
+    /*
     int iterationCount = 0;
-    while (lightSensor.Value() > .45 && iterationCount < 300)
+    while (lightSensor.Value() > .45)
     {
         LCD.WriteLine("Waiting for light to turn on.");
         Sleep(.1);
         clearLCD();
+
         iterationCount++;
+        if (iterationCount > 300)
+            break;
     }
+    */
+
+    Sleep(10.0);
 
     // Runs any code from the current routine
     finalRoutine();
@@ -71,6 +88,106 @@ int main(void)
 
     // Return value of zero indicates that no unrecoverable errors occurred
     return 0;
+}
+
+// Calibration values for RPS pathfinding
+float TOKEN_X, TOKEN_Y, TOKEN_HEADING;
+float DDR_BLUE_LIGHT_X, DDR_LIGHT_Y;
+float RPS_BUTTON_X, RPS_BUTTON_Y, RPS_BUTTON_HEADING;
+float FOOSBALL_START_X, FOOSBALL_START_Y, FOOSBALL_END_X, FOOSBALL_END_Y;
+float LEVER_X, LEVER_Y, LEVER_HEADING;
+
+void calibrate()
+{
+    // Holds user touch positions
+    float x, y;
+
+    // Token
+    while (!LCD.Touch(&x, &y))
+    {
+        clearLCD();
+        LCD.WriteLine("Waiting for Token Positioning.");
+        Sleep(.1);
+    }
+
+    loopWhileNoRPS();
+    TOKEN_X = RPS.X();
+    TOKEN_Y = RPS.Y();
+    TOKEN_HEADING = RPS.Heading();
+
+    Sleep(1.0);
+
+    // DDR, Far Button
+    while (!LCD.Touch(&x, &y))
+    {
+        clearLCD();
+        LCD.WriteLine("Waiting for DDR Far Positioning.");
+        Sleep(.1);
+    }
+
+    loopWhileNoRPS();
+    DDR_BLUE_LIGHT_X = RPS.X();
+    DDR_LIGHT_Y = RPS.Y();
+
+    Sleep(1.0);
+
+    // RPS Button
+    while (!LCD.Touch(&x, &y))
+    {
+        clearLCD();
+        LCD.WriteLine("Waiting for RPS Button Positioning.");
+        Sleep(.1);
+    }
+
+    loopWhileNoRPS();
+    RPS_BUTTON_X = RPS.X();
+    RPS_BUTTON_Y = RPS.Y();
+    RPS_BUTTON_HEADING = RPS.Heading();
+
+    Sleep(1.0);
+
+    // Foosball Start
+    while (!LCD.Touch(&x, &y))
+    {
+        clearLCD();
+        LCD.WriteLine("Waiting for Foosball Start Positioning.");
+        Sleep(.1);
+    }
+
+    loopWhileNoRPS();
+    FOOSBALL_START_X = RPS.X();
+    FOOSBALL_START_Y = RPS.Y();
+
+    Sleep(1.0);
+
+    // Foosball End
+    while (!LCD.Touch(&x, &y))
+    {
+        clearLCD();
+        LCD.WriteLine("Waiting for Foosball End Positioning.");
+        Sleep(.1);
+    }
+
+    loopWhileNoRPS();
+    FOOSBALL_END_X = RPS.X();
+    FOOSBALL_END_Y = RPS.Y();
+
+    Sleep(1.0);
+
+    // Lever
+    while (!LCD.Touch(&x, &y))
+    {
+        clearLCD();
+        LCD.WriteLine("Waiting for Lever Positioning.");
+        Sleep(.1);
+    }
+
+    loopWhileNoRPS();
+    LEVER_X = RPS.X();
+    LEVER_Y = RPS.Y();
+    LEVER_HEADING = RPS.Heading();
+
+    clearLCD();
 }
 
 void rpsTest()
@@ -85,14 +202,12 @@ void rpsTest()
     }
 }
 
-
-
 // These points are points I went and measured on whatever course is on the closer half towards the consoles
 void finalRoutine()
 {
     // Navigating to the token drop
     // 13.4, x, 23.3 Before
-    goToPoint(16, 24.4, 50.0, true, .5, .75, false, 0.0);
+    goToPoint(TOKEN_X, TOKEN_Y, .75, .5, true, TOKEN_HEADING, false, 0.0);
 
     // Dropping the token
     armServo.SetDegree(120);
@@ -100,10 +215,10 @@ void finalRoutine()
     armServo.SetDegree(30);
 
     // Go to the side of one of the lights
-    goToPoint(16, 15, 0.0, false, .75, 1.5, false, 0.0);
+    goToPoint(16, 15, 1.0, .6, false, 0.0, false, 0.0);
 
     // Go on top of the near light
-    goToPoint(24.25, 12.5, 0.0, false, .75, .75, false, 0.0);
+    goToPoint(DDR_BLUE_LIGHT_X - 4.5, DDR_LIGHT_Y, .75, .4, false, 0.0, false, 0.0);
 
     leftMotor.Stop();
     rightMotor.Stop();
@@ -116,44 +231,48 @@ void finalRoutine()
     // If the light is blue, do this pathfi`nding and press the blue button
     if (lightSensor.Value() > DDR_LIGHT_CUTOFF_VALUE)
     {
-        // Getting set up above the target position
-        goToPoint(28.6, 16.5, 270, true, .75, .75, false, 0.0);
-
-        // Pressing the button - Precision really matters
-        goToPoint(29.5, 11, 270, false, .75, .5, true, 2.0);
+        goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y + 3, .75, .5, true, 270, false, 0.0); // Positioning above button
+        goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y - 3, .75, .7, false, 0.0, true, 2.0); // Hitting button
     }
 
     // Otherwise, the light is red, so do red button pathfinding and press the red button
     else
     {
-        // Getting set up above the red stuff
-        goToPoint(23.5, 16.5, 270, true, .75, .75, false, 0.0);
-
-        // Pressing the button - Precision really matters
-        goToPoint(23.5, 10, 270, false, .75, .5, true, 2.0);
+        goToPoint(DDR_BLUE_LIGHT_X - 4.5, DDR_LIGHT_Y + 3, .75, .5, true, 270, false, 0.0); // Positioning above button
+        goToPoint(DDR_BLUE_LIGHT_X - 4.5, DDR_LIGHT_Y - 3, .75, .7, false, 0.0, true, 1.0); // Hitting button
     }
 
     // Space and angle for the RPS button
-    goToPoint(24.75, 16.6, 205.0, true, .5, .4, false, 0.0);
+    goToPoint(RPS_BUTTON_X, RPS_BUTTON_Y, .5, .3, true, RPS_BUTTON_HEADING, false, 0.0);
 
     // Press the RPS button
     armServo.SetDegree(110); Sleep(4.0);
     armServo.SetDegree(30);
 
     // Move to bottom of ramp
-    goToPoint(28.75, 16.75, 0.0, false, 1.0, 1.5, false, 0.0);
+    goToPoint(28.75, 16.75, 1.5, .6, false, 0.0, false, 0.0);
 
     // Move up ramp and stop somewhere near the top
-    goToPoint(31, 55, 0.0, false, 1.0, 1.5, false, 0.0);
+    goToPoint(31, 55, 2.0, .7, false, 0.0, false, 0.0);
 
     // Positioning for the foosball task
     if (!hasExhaustedDeadzone)
-        goToPoint(22.75, 63.6, 0.0, true, .5, .5, false, 0.0);
+        goToPoint(FOOSBALL_START_X, FOOSBALL_START_Y, .5, .5, true, 0.0, false, 0.0);
+
+    armServo.SetDegree(110);
+    Sleep(.5);
+
+    // After the foosball task
+    if (!hasExhaustedDeadzone)
+        goToPointBackwards(FOOSBALL_END_X, FOOSBALL_END_Y, .5, .5, false, 0.0, false, 0.0);
+
+    armServo.SetDegree(30);
+    Sleep(1.0);
 
     // Position for the lever
     // Todo - Decide if we want to approach head-on or from the side (from the side would probably be more consistent but would require slightly more precise positioning, I guess
     if (!hasExhaustedDeadzone)
-        goToPoint(6, 55, 135, true, .75, .75, false, 1.5);
+        goToPoint(LEVER_X, LEVER_Y, .75, .5, true, LEVER_HEADING, false, 1.5);
 
     // Pull the lever
     if (!hasExhaustedDeadzone)
@@ -166,26 +285,17 @@ void finalRoutine()
     /* Stuff from here down is taken directly from PT4 and should be pretty consistent, though the end buttoncould probably use some finesse */
     // Go to (very approximately) the top of the ramp
     // If it hits the deadzone, it should skip to here within a few seconds after it gets back to RPS
-    goToPoint(6, 55.0, 0.0, false, 2.0, 1.0, false, 0.0);
+    goToPoint(6, 55.0, 2.0, 1.0, false, 0.0, false, 0.0);
 
     // Go down the ramp and in front of the end button
-    goToPoint(6, 8.0, 225, true, 2.0, 1.0, false, 0.0);
-
-    // Press the end button
-    goToPoint(0.0, 0.0, 0.0, false, 2.0, 1.0, false, 0.0);
+    goToPoint(6, 8.0, 2.0, 1.0, false, 0.0, false, 0.0);
 }
-
-
-
-
 
 // Initializing requisite systems
 void init()
 {
     RPS.InitializeTouchMenu();
     SD.OpenLog();
-
-    armServo.SetDegree(30);
 }
 
 // Deinitializing certain systems

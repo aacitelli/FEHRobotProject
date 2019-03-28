@@ -1,52 +1,3 @@
-/* About This File:
- *
- *  This is the custom-built "movement" library for our robot. It was living hell to program (mostly due to trig, trig sucks)
- *  and is probably also living hell to debug. God help us all.
- *
- *  It contains a very modular navigation where each function itself doesn't do much but can be combined very easily
- *  with others in order to make our entire movement system.
- *
- *  This file is imported into our main file near the top, and we can use any of these functions as if they were located
- *  in the main file.
- *
- *  This file is separate because these functions took up a lot of space. Separating methods that are part of the same
- *  sort of system (movement, in this case) makes everything easier and more clear to navigate to.
- *
- *  */
-
-/**
-
- * Organization:
- *
- * Overall method used 99% of the time is goToPoint, which has access to the robot's X, Y, and Heading and has the intended X, Y, and Heading as arguments.
- *
- * First, it will turn forwards toward the point until it reaches within a very small (like 4-5 degree) tolerance in angle.
- * Then, it will move forward. If its current angle is pointed slightly away from the point it's headed to, it will turn towards it slightly to compensate until it's again pointed towards it.
- *
- * Whenever it gets to within a specified distance tolerance of the "end point" (1-2 inches), it will do a hard spot, then turn whichever way is best in order
- * to turn towards the end heading.
- *
- * */
-
-/* Talk about today:
- *
- * Misc. Items
- *
- *  - Is a valley the best thing if our arm is actually tilted?
- *  - Consider rotating the arm to be straight 90 degrees - I think it would be better but I want your input
- *
- * Strategies for Foosball
- *
- *  - My Ideal Order:
- *      - Go up near foosball
- *      - Push the dodecahedron off towards the token machine so it doesn't get in the way when we go to the lever
- *      - Go to foosball 90 degrees off, get arm caught, go backwards using modified, backwards goToPoint
- *  - Do a more basic version of goToPoint where it just tries to align itself with a certain heading and go backwards a certain speed
- *  - Better to press down on top or try and get our arm stuck behind?
- *      - I personally think its better to press on top because we'll have to do it regardless to get the counters off the wall, might as well go all the way
- *
- */
-
 #ifndef CUSTOMNAVIGATION_H
 #define CUSTOMNAVIGATION_H
 
@@ -69,16 +20,16 @@ void turn180DegreesAway(float endX, float endY);
 float rotate180Degrees(float degrees);
 void turnSouthAndGoUntilRPS(float startHeading);
 void updateLastValidRPSValues();
+float rpsXToCentroidX();
+float rpsYToCentroidY();
 
 using namespace std;
-
-float lastValidX, lastValidY, lastValidHeading;
 
 #define GOTOPOINT_COUNTS_PER_SECOND 10
 
 // Todo - Make a version of goToPoint that goes backwards (instead of trying to optimize for whether backwards is faster or not algorithmically - Hardcode whether it's forwards or backwards)
-bool goToPointRPSIsBad() { return (RPS.X() == -1 || RPS.Y() == -1 || RPS.Heading() == -1 || RPS.X() == -2 || RPS.Y() == -2 || RPS.Heading() == -2); }
-void goToPoint(float endX, float endY, float endHeading, bool shouldTurnToEndHeading, float distanceTolerance, float percentageOfFullSpeed, bool isTimed, float time)
+
+void goToPoint(float endX, float endY, float distanceTolerance, float percentageOfFullSpeed, bool shouldTurnToEndHeading, float endHeading, bool isTimed, float time)
 {
     SD.Printf("goToPoint: Going to point (%f, %f) and End Heading %f.\r\n", endX, endY, endHeading);
 
@@ -91,20 +42,28 @@ void goToPoint(float endX, float endY, float endHeading, bool shouldTurnToEndHea
     SD.Printf("goToPoint: Entering distance tolerance check.\r\n");
     while (getDistance(rpsXToCentroidX(), rpsYToCentroidY(), endX, endY) > distanceTolerance)
     {
-        // Check for deadzone and go south if it ever detects it, triggering something that makes it skip relevant goToPoint methods if it goes over time
-        if (RPS.X() == -2 || RPS.Y() == -2 || RPS.Heading() == -2)
+        // Handling course stuff
+        if (RPSIsBad())
         {
-            // Causes the program to skip certain goToPoint calls
-            hasExhaustedDeadzone = true;
+            // Check for deadzone and go south if it ever detects it, triggering something that makes it skip relevant goToPoint methods if it goes over time
+            if (RPS.X() == -2 || RPS.Y() == -2 || RPS.Heading() == -2)
+            {
+                // Causes the program to skip certain goToPoint calls
+                hasExhaustedDeadzone = true;
 
-            // Does what you think it does
-            turnSouthAndGoUntilRPS(lastValidHeading);
+                // Does what you think it does
+                turnSouthAndGoUntilRPS(lastValidHeading);
 
-            // Escapes this call of goToPoint because it doesn't really have RPS any more
-            return;
+                // Escapes this call of goToPoint because it doesn't really have RPS any more
+                return;
+            }
+
+            Sleep(.01);
+            continue;
         }
 
-        // Checks if the loop has gone over its timing (if a passed-in boolean value indicates that this should be checked for)
+
+        // If this instance of goToPoint is timed, check for that
         if (isTimed)
         {
             iterationCount++;
@@ -114,23 +73,12 @@ void goToPoint(float endX, float endY, float endHeading, bool shouldTurnToEndHea
             }
         }
 
-        // If RPS missed a cycle, keep going with the current command until RPS fixes itself (or becomes a deadzone, though that case is handled elsewhere)
-        if (goToPointRPSIsBad())
-        {
-            Sleep(.001);
-            continue;
-        }
-
-        // Doing this frequently to make sure it always has valid backups
+        // If it gets to this point, RPS values are valid, meaning we can update everything and make new, updated decisions for positioning
         updateLastValidRPSValues();
-
-        // Current iteration is a go, so calculate where exactly it's supposed to be going
         float desiredHeading = getDesiredHeading(rpsXToCentroidX(), rpsYToCentroidY(), endX, endY);
 
         // Debug Output
         clearLCD();
-        LCD.Write("Current Iteration Count: "); LCD.WriteLine(iterationCount);
-        LCD.Write("Necessary It. Count: "); LCD.WriteLine(time * GOTOPOINT_COUNTS_PER_SECOND);
         LCD.Write("Current (x, y): ("); LCD.Write(RPS.X()); LCD.Write(", "); LCD.Write(RPS.Y()); LCD.WriteLine(")");
         LCD.Write("Intended (x, y): ("); LCD.Write(endX); LCD.Write(", "); LCD.Write(endY); LCD.WriteLine(")");
         LCD.Write("Current Heading: "); LCD.WriteLine(RPS.Heading());
@@ -141,7 +89,7 @@ void goToPoint(float endX, float endY, float endHeading, bool shouldTurnToEndHea
         SD.Printf("goToPoint: Intended heading: %f\r\n", desiredHeading);
 
         // Making angle adjustments if necessary
-        if (smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) > 1)
+        if (smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) > 2)
         {
             SD.Printf("goToPoint: Robot's heading is at least minorly off (3+ Degrees).\r\n");
 
@@ -161,15 +109,15 @@ void goToPoint(float endX, float endY, float endHeading, bool shouldTurnToEndHea
             else if (shouldTurnLeft(RPS.Heading(), desiredHeading))
             {
                 // SD.Printf("goToPoint: Turning slightly left to autocorrect.\r\n");
-                leftMotor.SetPercent(LEFT_MOTOR_PERCENT * percentageOfFullSpeed * .6);
-                rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * percentageOfFullSpeed);
+                leftMotor.SetPercent(LEFT_MOTOR_PERCENT * .25);
+                rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * .35);
             }
 
             else
             {
                 // SD.Printf("goToPoint: Turning slightly right to autocorrect.\r\n");
-                leftMotor.SetPercent(LEFT_MOTOR_PERCENT * percentageOfFullSpeed);
-                rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * percentageOfFullSpeed * .6);
+                leftMotor.SetPercent(LEFT_MOTOR_PERCENT * .35);
+                rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * .25);
             }
         }
 
@@ -180,14 +128,8 @@ void goToPoint(float endX, float endY, float endHeading, bool shouldTurnToEndHea
             rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * percentageOfFullSpeed);
         }
 
-        // Doing this frequently to make sure it always has valid backups
-        updateLastValidRPSValues();
-
         // Waiting a little bit until we poll RPS again and check all our values to make sure the robot is positioning well
         Sleep(.001);
-
-        // Doing this frequently to make sure it always has valid backups
-        updateLastValidRPSValues();
     }
 
     // Stopping the motors outright
@@ -198,20 +140,10 @@ void goToPoint(float endX, float endY, float endHeading, bool shouldTurnToEndHea
         turn(endHeading);
 }
 
-// Updates global variables, but only to "valid" vales (anything that's not "no rps" or a deadzone value
-void updateLastValidRPSValues()
-{
-    if (RPS.X() != -1 && RPS.X() != -2)
-        lastValidX = RPS.X();
-    if (RPS.Y() != -1 && RPS.Y() != -2)
-        lastValidY = RPS.Y();
-    if (RPS.Heading() != -1 && RPS.Heading() != -2)
-        lastValidHeading = RPS.Heading();
-}
-
+// Todo - Figure out better, more consistent values for this
 void turnSouthAndGoUntilRPS(float startHeading)
 {
-    // First Quadrant - More Turning Needed
+    // 0 to 90
     if (startHeading >= 0 && startHeading < 90)
     {
         leftMotor.SetPercent(LEFT_MOTOR_PERCENT);
@@ -220,7 +152,7 @@ void turnSouthAndGoUntilRPS(float startHeading)
         Sleep(1.2);
     }
 
-    // Second Quadrant - More Turning Needed
+    // 90 to 180
     else if (startHeading >= 90 && startHeading < 180)
     {
         leftMotor.SetPercent(-LEFT_MOTOR_PERCENT);
@@ -229,7 +161,7 @@ void turnSouthAndGoUntilRPS(float startHeading)
         Sleep(1.2);
     }
 
-    // Third Quadrant - Less Turning Needed
+    // 180 to 270
     else if (startHeading >= 180 && startHeading < 270)
     {
         leftMotor.SetPercent(-LEFT_MOTOR_PERCENT);
@@ -238,7 +170,7 @@ void turnSouthAndGoUntilRPS(float startHeading)
         Sleep(.4);
     }
 
-    // Fourth Quadrant - Less Turning Needed
+    // 270 to 360
     else
     {
         leftMotor.SetPercent(LEFT_MOTOR_PERCENT);
@@ -247,26 +179,20 @@ void turnSouthAndGoUntilRPS(float startHeading)
         Sleep(.4);
     }
 
-    leftMotor.Stop();
-    rightMotor.Stop();
-
-    Sleep(.5);
-
     leftMotor.SetPercent(LEFT_MOTOR_PERCENT);
     rightMotor.SetPercent(RIGHT_MOTOR_PERCENT);
 
     while (RPS.X() == -1 || RPS.X() == -2) { Sleep(.001); }
 
     // Give it a little leeway to make sure it's truly out of the deadzone
-    Sleep(.5);
+    Sleep(1.0);
 
     leftMotor.Stop();
     rightMotor.Stop();
 }
 
-/*
 // I don't think we'll even end up using this, but I'm leaving it here regardless
-void goToPointBackwards(float endX, float endY, float endHeading, bool shouldTurnToEndHeading, float distanceTolerance, float percentageOfFullSpeed, bool shouldHaveMaxTime, float maxTime)
+void goToPointBackwards(float endX, float endY, float endHeading, bool shouldTurnToEndHeading, float distanceTolerance, float percentageOfFullSpeed, bool isTimed, float time)
 {
     SD.Printf("goToPoint: Going to point (%f, %f) and End Heading %f.\r\n", endX, endY, endHeading);
 
@@ -274,15 +200,37 @@ void goToPointBackwards(float endX, float endY, float endHeading, bool shouldTur
     loopWhileNoRPS();
     turn180DegreesAway(endX, endY);
 
-    clock_t startTime = clock();
+    int iterationCount  = 0;
 
     SD.Printf("goToPoint: Entering distance tolerance check.\r\n");
     while (getDistance(rpsXToCentroidX(), rpsYToCentroidY(), endX, endY) > distanceTolerance)
     {
-        // If it has a max time, break out of this loop if it overdoes it
-        if (shouldHaveMaxTime)
+        // Handling course stuff
+        if (RPSIsBad())
         {
-            if (clock() - startTime > maxTime)
+            // Check for deadzone and go south if it ever detects it, triggering something that makes it skip relevant goToPoint methods if it goes over time
+            if (RPS.X() == -2 || RPS.Y() == -2 || RPS.Heading() == -2)
+            {
+                // Causes the program to skip certain goToPoint calls
+                hasExhaustedDeadzone = true;
+
+                // Does what you think it does
+                turnSouthAndGoUntilRPS(lastValidHeading);
+
+                // Escapes this call of goToPoint because it doesn't really have RPS any more
+                return;
+            }
+
+            Sleep(.01);
+            continue;
+        }
+
+
+        // If this instance of goToPoint is timed, check for that
+        if (isTimed)
+        {
+            iterationCount++;
+            if (iterationCount > (time * GOTOPOINT_COUNTS_PER_SECOND))
             {
                 break;
             }
@@ -302,7 +250,7 @@ void goToPointBackwards(float endX, float endY, float endHeading, bool shouldTur
         SD.Printf("backwardsGoToPoint: Current heading: %f\r\n", RPS.Heading());
         SD.Printf("backwardsGoToPoint: Intended heading: %f\r\n", desiredHeading);
 
-        if (goToPointRPSIsBad())
+        if (RPSIsBad())
         {
             Sleep(.001);
             continue;
@@ -313,7 +261,7 @@ void goToPointBackwards(float endX, float endY, float endHeading, bool shouldTur
             SD.Printf("goToPoint: Robot's heading is at least minorly off (3+ Degrees).\r\n");
 
             // If heading is seriously off and it's not super close to its intended destination (which would cause extreme fidgeting very close to the point, depending on the tolerance)
-            if (getDistance(rpsXToCentroidX(), rpsYToCentroidY(), endX, endY) > 2 && smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) > 35)
+            if (getDistance(rpsXToCentroidX(), rpsYToCentroidY(), endX, endY) > 2 && smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) > 30)
             {
                 SD.Printf("goToPoint: Heading MAJORLY off. Stopping and re-turning.\r\n");
                 SD.Printf("goToPoint: StartHeading = %f, endHeading = %f\r\n", RPS.Heading(), desiredHeading);
@@ -354,12 +302,10 @@ void goToPointBackwards(float endX, float endY, float endHeading, bool shouldTur
     // Stopping the motors outright
     leftMotor.Stop();
     rightMotor.Stop();
-    Sleep(.5);
 
     if (shouldTurnToEndHeading)
         turn(endHeading);
 }
-*/
 
 // Todo - Documentation
 bool shouldTurnLeft(float startHeading, float endHeading)
@@ -382,7 +328,7 @@ void turn(float endHeading)
     SD.Printf("turn: Entered turn loop. Turning to %f\r\n", endHeading);
 
     // Returns faulty value if it goes over zero degrees
-    while (smallestDistanceBetweenHeadings(RPS.Heading(), endHeading) > 4)
+    while (smallestDistanceBetweenHeadings(RPS.Heading(), endHeading) > 5)
     {
         loopWhileNoRPS();
 
@@ -394,14 +340,14 @@ void turn(float endHeading)
 
         if (shouldTurnLeft(RPS.Heading(), endHeading))
         {
-            leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .6);
-            rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * .6);
+            leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .3);
+            rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * .3);
         }
 
         else
         {
-            leftMotor.SetPercent(LEFT_MOTOR_PERCENT * .6);
-            rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .6);
+            leftMotor.SetPercent(LEFT_MOTOR_PERCENT * .3);
+            rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .3);
         }
 
         Sleep(.001);
@@ -411,14 +357,13 @@ void turn(float endHeading)
     rightMotor.Stop();
 }
 
-/*
 void turn180DegreesAway (float endX, float endY) { turn180DegreesAway(getDesiredHeading(rpsXToCentroidX(), rpsYToCentroidY(), endX, endY)); }
 void turn180DegreesAway(float endHeading)
 {
     SD.Printf("turn180DegreesAway: Entered turn away loop. Turning to %f\r\n", endHeading);
 
     // Returns faulty value if it goes over zero degrees
-    while (smallestDistanceBetweenHeadings(RPS.Heading(), rotate180Degrees(endHeading)) > 7)
+    while (smallestDistanceBetweenHeadings(RPS.Heading(), rotate180Degrees(endHeading)) > 5)
     {
         loopWhileNoRPS();
 
@@ -430,20 +375,20 @@ void turn180DegreesAway(float endHeading)
 
         if (shouldTurnLeft(RPS.Heading(), rotate180Degrees(endHeading)))
         {
-            leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .6);
-            rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * .6);
+            leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .5);
+            rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * .5);
         }
 
         else
         {
-            leftMotor.SetPercent(LEFT_MOTOR_PERCENT * .6);
-            rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .6);
+            leftMotor.SetPercent(LEFT_MOTOR_PERCENT * .5);
+            rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .5);
         }
 
         Sleep(.001);
 
         // Keep going with the current motor setting until RPS resolves to a legitimate value
-        while (goToPointRPSIsBad())
+        while (RPSIsBad())
         {
             Sleep(.001);
         }
@@ -461,6 +406,54 @@ float rotate180Degrees(float degrees)
     // fmod is just modulus but for two float values, which we need here
     return fmod((degrees + 180), 360.0);
 }
-*/
+
+
+// This isn't used, but will be used if our QR code dramatically changes position
+float rpsXToCentroidX()
+{
+    float returnValue;
+
+    // 0 Degrees (Inclusive) to 90 Degrees (Exclusive)
+    if (RPS.Heading() >= 0 && RPS.Heading() < 90)
+        returnValue = RPS.X() + DISTANCE_BETWEEN_RPS_AND_CENTROID * cos(degreeToRadian(RPS.Heading()));
+
+    // 90 Degrees (Inclusive) to 180 Degrees (Exclusive)
+    else if (RPS.Heading() >= 90 && RPS.Heading() < 180)
+        returnValue = RPS.X() - (DISTANCE_BETWEEN_RPS_AND_CENTROID * sin(degreeToRadian(RPS.Heading() - 90)));
+
+    // 180 Degrees (Inclusve) to 270 Degrees (Exclusive)
+    else if (RPS.Heading() >= 180 && RPS.Heading() < 270)
+        returnValue = RPS.X() - (DISTANCE_BETWEEN_RPS_AND_CENTROID * cos(degreeToRadian(RPS.Heading() - 180)));
+
+    // 270 Degrees (Inclusive) to 360 Degrees (Inclusive)
+    else
+        returnValue = RPS.X() + (DISTANCE_BETWEEN_RPS_AND_CENTROID * sin(degreeToRadian(RPS.Heading() - 270)));
+
+    return returnValue;
+}
+
+// Also isn't used, but will be used if our QR code dramatically changes position
+float rpsYToCentroidY()
+{
+    float returnValue;
+
+    // 0 Degrees (Inclusive) to 90 Degrees (Exclusive)
+    if (RPS.Heading() >= 0 && RPS.Heading() < 90)
+        returnValue = RPS.Y() + (DISTANCE_BETWEEN_RPS_AND_CENTROID * sin(degreeToRadian(RPS.Heading())));
+
+    // 90 Degrees (Inclusive) to 180 Degrees (Exclusive)
+    else if (RPS.Heading() >= 90 && RPS.Heading() < 180)
+        returnValue = RPS.Y() + (DISTANCE_BETWEEN_RPS_AND_CENTROID * cos(degreeToRadian(RPS.Heading() - 90)));
+
+    // 180 Degrees (Inclusive) to 270 Degrees (Exclusive)
+    else if (RPS.Heading() >= 180 && RPS.Heading() < 270)
+        returnValue = RPS.Y() - (DISTANCE_BETWEEN_RPS_AND_CENTROID * sin(degreeToRadian(RPS.Heading() - 180)));
+
+    // 270 Degrees (Inclusive) to 360 Degrees (Inclusive)
+    else
+        returnValue = RPS.Y() - (DISTANCE_BETWEEN_RPS_AND_CENTROID * cos(degreeToRadian(RPS.Heading() - 270)));
+
+    return returnValue;
+}
 
 #endif
