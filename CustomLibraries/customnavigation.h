@@ -37,21 +37,25 @@ void goToPoint(float endX, float endY, float distanceTolerance, float percentage
     loopWhileNoRPS();
     turn(endX, endY);
 
-    int iterationCount  = 0;
-
     SD.Printf("goToPoint: Entering distance tolerance check.\r\n");
+    int iterationCount  = 0;
     while (getDistance(rpsXToCentroidX(), rpsYToCentroidY(), endX, endY) > distanceTolerance)
     {
         // Handling course stuff
         if (RPSIsBad())
         {
+            SD.Printf("Current goToPoint tolerance loop has invalid RPS.\r\n");
+
             // Check for deadzone and go south if it ever detects it, triggering something that makes it skip relevant goToPoint methods if it goes over time
             if (RPS.X() == -2 || RPS.Y() == -2 || RPS.Heading() == -2)
             {
+                SD.Printf("Deadzone has become enabled again.\r\n");
+
                 // Causes the program to skip certain goToPoint calls
                 hasExhaustedDeadzone = true;
 
                 // Does what you think it does
+                SD.Printf("Turning roughly south and going until RPS.\r\n");
                 turnSouthAndGoUntilRPS(lastValidHeading);
 
                 // Escapes this call of goToPoint because it doesn't really have RPS any more
@@ -66,6 +70,9 @@ void goToPoint(float endX, float endY, float distanceTolerance, float percentage
         // If this instance of goToPoint is timed, check for that
         if (isTimed)
         {
+            SD.Printf("Current Iteration Count: %f\r\n", iterationCount);
+            SD.Printf("Max Iteration Count: %f\r\n", (time * GOTOPOINT_COUNTS_PER_SECOND));
+
             iterationCount++;
             if (iterationCount > (time * GOTOPOINT_COUNTS_PER_SECOND))
             {
@@ -89,15 +96,14 @@ void goToPoint(float endX, float endY, float distanceTolerance, float percentage
         SD.Printf("goToPoint: Intended heading: %f\r\n", desiredHeading);
 
         // Making angle adjustments if necessary
-        if (smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) > 2)
+        if (smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) > 5)
         {
             SD.Printf("goToPoint: Robot's heading is at least minorly off (3+ Degrees).\r\n");
 
             // This may need tweaked for when we're going really fast, but past a certain point that's an issue with your tolerance being too high
-            if (getDistance(rpsXToCentroidX(), rpsYToCentroidY(), endX, endY) > 2 && smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) > 30)
+            if (getDistance(rpsXToCentroidX(), rpsYToCentroidY(), endX, endY) > 2 && smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) > 25)
             {
                 SD.Printf("goToPoint: Heading MAJORLY off. Stopping and re-turning.\r\n");
-                SD.Printf("goToPoint: StartHeading = %f, endHeading = %f\r\n", RPS.Heading(), desiredHeading);
 
                 leftMotor.Stop();
                 rightMotor.Stop();
@@ -108,22 +114,23 @@ void goToPoint(float endX, float endY, float distanceTolerance, float percentage
             // Checking which direction we need to turn to get back to the correct heading and acting accordingly
             else if (shouldTurnLeft(RPS.Heading(), desiredHeading))
             {
-                // SD.Printf("goToPoint: Turning slightly left to autocorrect.\r\n");
-                leftMotor.SetPercent(LEFT_MOTOR_PERCENT * .25);
-                rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * .35);
+                SD.Printf("goToPoint: Turning slightly left to autocorrect.\r\n");
+                leftMotor.SetPercent(LEFT_MOTOR_PERCENT * .15);
+                rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * .4);
             }
 
             else
             {
-                // SD.Printf("goToPoint: Turning slightly right to autocorrect.\r\n");
-                leftMotor.SetPercent(LEFT_MOTOR_PERCENT * .35);
-                rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * .25);
+                SD.Printf("goToPoint: Turning slightly right to autocorrect.\r\n");
+                leftMotor.SetPercent(LEFT_MOTOR_PERCENT * .4);
+                rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * .15);
             }
         }
 
         // Otherwise, angle is fine, so set the motors back to going straight
         else
         {
+            SD.Printf("Robot is in line with desired angle. Going straight at full speed.\r\n");
             leftMotor.SetPercent(LEFT_MOTOR_PERCENT * percentageOfFullSpeed);
             rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * percentageOfFullSpeed);
         }
@@ -133,11 +140,15 @@ void goToPoint(float endX, float endY, float distanceTolerance, float percentage
     }
 
     // Stopping the motors outright
+    SD.Printf("goToPoint is done; Stopping motors.\r\n");
     leftMotor.Stop();
     rightMotor.Stop();
 
     if (shouldTurnToEndHeading)
+    {
+        SD.Printf("shouldTurnToEndHeading is true, so turning to %f\r\n", endHeading);
         turn(endHeading);
+    }
 }
 
 // Todo - Figure out better, more consistent values for this
@@ -192,7 +203,7 @@ void turnSouthAndGoUntilRPS(float startHeading)
 }
 
 // I don't think we'll even end up using this, but I'm leaving it here regardless
-void goToPointBackwards(float endX, float endY, float endHeading, bool shouldTurnToEndHeading, float distanceTolerance, float percentageOfFullSpeed, bool isTimed, float time)
+void goToPointBackwards(float endX, float endY, float distanceTolerance, float percentageOfFullSpeed, bool shouldTurnToEndHeading, float endHeading, bool isTimed, float time)
 {
     SD.Printf("goToPoint: Going to point (%f, %f) and End Heading %f.\r\n", endX, endY, endHeading);
 
@@ -200,9 +211,8 @@ void goToPointBackwards(float endX, float endY, float endHeading, bool shouldTur
     loopWhileNoRPS();
     turn180DegreesAway(endX, endY);
 
-    int iterationCount  = 0;
-
     SD.Printf("goToPoint: Entering distance tolerance check.\r\n");
+    int iterationCount  = 0;
     while (getDistance(rpsXToCentroidX(), rpsYToCentroidY(), endX, endY) > distanceTolerance)
     {
         // Handling course stuff
@@ -216,15 +226,12 @@ void goToPointBackwards(float endX, float endY, float endHeading, bool shouldTur
 
                 // Does what you think it does
                 turnSouthAndGoUntilRPS(lastValidHeading);
-
-                // Escapes this call of goToPoint because it doesn't really have RPS any more
-                return;
+                return; // Escapes the function
             }
 
             Sleep(.01);
             continue;
         }
-
 
         // If this instance of goToPoint is timed, check for that
         if (isTimed)
@@ -250,18 +257,12 @@ void goToPointBackwards(float endX, float endY, float endHeading, bool shouldTur
         SD.Printf("backwardsGoToPoint: Current heading: %f\r\n", RPS.Heading());
         SD.Printf("backwardsGoToPoint: Intended heading: %f\r\n", desiredHeading);
 
-        if (RPSIsBad())
-        {
-            Sleep(.001);
-            continue;
-        }
-
-        if (smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) > 1)
+        if (smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) > 5)
         {
             SD.Printf("goToPoint: Robot's heading is at least minorly off (3+ Degrees).\r\n");
 
             // If heading is seriously off and it's not super close to its intended destination (which would cause extreme fidgeting very close to the point, depending on the tolerance)
-            if (getDistance(rpsXToCentroidX(), rpsYToCentroidY(), endX, endY) > 2 && smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) > 30)
+            if (smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) > 30)
             {
                 SD.Printf("goToPoint: Heading MAJORLY off. Stopping and re-turning.\r\n");
                 SD.Printf("goToPoint: StartHeading = %f, endHeading = %f\r\n", RPS.Heading(), desiredHeading);
@@ -277,15 +278,15 @@ void goToPointBackwards(float endX, float endY, float endHeading, bool shouldTur
             else if (shouldTurnLeft(RPS.Heading(), desiredHeading))
             {
                 SD.Printf("goToPoint: Turning slightly left to autocorrect.\r\n");
-                leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * percentageOfFullSpeed);
-                rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * percentageOfFullSpeed * .6);
+                leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .4);
+                rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .325);
             }
 
             else
             {
                 SD.Printf("goToPoint: Turning slightly right to autocorrect.\r\n");
-                leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * percentageOfFullSpeed * .6);
-                rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * percentageOfFullSpeed);
+                leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .325);
+                rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .4);
             }
         }
 
@@ -296,7 +297,7 @@ void goToPointBackwards(float endX, float endY, float endHeading, bool shouldTur
             rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * percentageOfFullSpeed);
         }
 
-        Sleep(.001);
+        Sleep(.01);
     }
 
     // Stopping the motors outright
@@ -318,12 +319,12 @@ bool shouldTurnLeft(float startHeading, float endHeading)
     else { ccwDistance = endHeading - startHeading; } // CCW No-Wrap
 
     // If ccw is less than cw, return that it should turn left. Otherwise, return false
-    return (ccwDistance <= cwDistance);
+    return (ccwDistance <= cwDistance);m,kl
 }
 
 // Overloaded method that just calls original method but figures out the angle given two points
 void turn (float endX, float endY) { turn(getDesiredHeading(rpsXToCentroidX(), rpsYToCentroidY(), endX, endY)); }
-void turn(float endHeading)
+void turn (float endHeading)
 {
     SD.Printf("turn: Entered turn loop. Turning to %f\r\n", endHeading);
 
@@ -350,7 +351,7 @@ void turn(float endHeading)
             rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .3);
         }
 
-        Sleep(.001);
+        Sleep(.01);
     }
 
     leftMotor.Stop();
@@ -406,7 +407,6 @@ float rotate180Degrees(float degrees)
     // fmod is just modulus but for two float values, which we need here
     return fmod((degrees + 180), 360.0);
 }
-
 
 // This isn't used, but will be used if our QR code dramatically changes position
 float rpsXToCentroidX()
