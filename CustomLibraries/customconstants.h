@@ -28,6 +28,10 @@ const float EAST = 0;
 const float SOUTH = 270;
 const float WEST = 180;
 
+// Used with hardcoded recovery function when deadzone hits
+const float DEGREES_PER_SECOND = (690 / 5.0);
+const float SECONDS_PER_DEGREE = (5.0 / 690);
+
 // Todo - Path more intelligently around the dodecahedron instead of just trying to go south to make the panic algorithm more consistent
 
 // Triggered if goToPoint is in a deadzone

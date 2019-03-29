@@ -65,7 +65,7 @@ int main(void)
         clearLCD();
 
         iterationCount++;
-        if (iterationCount > 300)
+        if (iterationCount > 400)
             break;
     }
 
@@ -74,8 +74,6 @@ int main(void)
 
     // Shuts down whatever needs shut down at the end of a run
     deinit();
-
-    // Return value of zero indicates that no unrecoverable errors occurred
     return 0;
 }
 
@@ -119,6 +117,7 @@ void calibrate()
     SD.Printf("DDR Y: %f\r\n", DDR_LIGHT_Y);
     Sleep(1.0);
 
+    /*
     // RPS Button
     loopUntilTouch();
     loopWhileNoRPS();
@@ -156,8 +155,10 @@ void calibrate()
     LEVER_HEADING = RPS.Heading();
     SD.Printf("Lever X: %f\r\n", LEVER_X);
     SD.Printf("Lever Y: %f\r\n", LEVER_Y);
+    */
 
     // Preparation for next program step
+    armServo.SetDegree(30);
     clearLCD();
 }
 
@@ -167,7 +168,7 @@ void finalRoutine()
     // Navigating to the token drop
     // 13.4, x, 23.3 Before
     SD.Printf("Going to token.\r\n");
-    goToPoint(TOKEN_X, TOKEN_Y, 1.0, .3, true, TOKEN_HEADING, false, 0.0);
+    goToPoint(TOKEN_X, TOKEN_Y, 1.0, .25, true, TOKEN_HEADING, false, 0.0);
 
     // Dropping the token
     SD.Printf("Depositing token.\r\n");
@@ -177,39 +178,61 @@ void finalRoutine()
 
     // Go to the side of one of the lights
     SD.Printf("Going to the side of one of the lights.\r\n");
-    goToPoint(16, 15, 1.0, .6, false, 0.0, false, 0.0);
+    goToPoint(16, 15, 1.0, .25, false, 0.0, false, 0.0);
 
     // Go on top of the near light
     SD.Printf("Going on top of the near light.\r\n");
-    goToPoint(DDR_BLUE_LIGHT_X - 4.5, DDR_LIGHT_Y, 1.0, .4, false, 0.0, false, 0.0);
+    goToPoint(DDR_BLUE_LIGHT_X - 4.5, DDR_LIGHT_Y, 1.0, .25, false, 0.0, false, 0.0);
 
     leftMotor.Stop();
     rightMotor.Stop();
+    Sleep(1.0);
+    SD.Printf("Light Sensor Output: %f\r\n", lightSensor.Value());
 
-    // Deciding what color the light is and acting conditionally based on which case is true
-    // If inconsistency is an issue, make this take samples over a second and take the average
-    // Blue light is around .83, Red light is around .25 (Keep this line for reference)
-    const float DDR_LIGHT_CUTOFF_VALUE = .5;
-
-    // If the light is blue, do this pathfi`nding and press the blue button
-    if (lightSensor.Value() > DDR_LIGHT_CUTOFF_VALUE)
+    // If the light is blue, do this pathfinding and press the blue button
+    if (lightSensor.Value() > .5)
     {
+        clearLCD();
+        LCD.WriteLine("BLUE.");
+        Sleep(1.0);
+
         SD.Printf("Light was detected as BLUE.\r\n");
-        goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y + 3, .75, .5, true, 270, false, 0.0); // Positioning above button
-        goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y - 3, .75, .7, false, 0.0, true, 2.0); // Hitting button
+
+        SD.Printf("Pathfinding above the blue light.\r\n");
+        goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y + 5, .75, .25, true, 270, false, 0.0); // Positioning above button
+
+        SD.Printf("Driving into the blue button.\r\n");
+        goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y - 3, .75, .35, false, 0.0, true, 8.0); // Hitting button for long enough to get bonus goal too
     }
 
     // Otherwise, the light is red, so do red button pathfinding and press the red button
     else
     {
+        clearLCD();
+        LCD.WriteLine("RED.");
+        Sleep(1.0);
+
         SD.Printf("Light was detected as RED.\r\n");
-        goToPoint(DDR_BLUE_LIGHT_X - 4.5, DDR_LIGHT_Y + 3, .75, .5, true, 270, false, 0.0); // Positioning above button
-        goToPoint(DDR_BLUE_LIGHT_X - 4.5, DDR_LIGHT_Y - 3, .75, .7, false, 0.0, true, 1.0); // Hitting button
+
+        SD.Printf("Pathfinding above the red light.\r\n");
+        goToPoint(DDR_BLUE_LIGHT_X - 4.5, DDR_LIGHT_Y + 5, .75, .25, true, 270, false, 0.0); // Positioning above button
+
+        SD.Printf("Driving into the red light.\r\n");
+        goToPoint(DDR_BLUE_LIGHT_X - 4.5, DDR_LIGHT_Y - 3, .75, .35, false, 0.0, true, 8.0); // Hitting button for long enough to get bonus goal too
     }
 
+    // Getting a little bit of spacing from DDR before going to the end button
+    SD.Printf("Pathfinding a little bit above DDR so we can go back to the end button.\r\n");
+    goToPoint(DDR_BLUE_LIGHT_X - 2.0, DDR_LIGHT_Y + 3, 1.0, .3, false, 0.0, false, 0.0);
+
+    // Go down the ramp and in front of the end button
+    SD.Printf("Going down the ramp and into the end button.\r\n");
+    goToPoint(5.0, 5.0, 1.5, .4, false, 0.0, false, 0.0);
+
+    /*
     // Space and angle for the RPS button
     SD.Printf("Positioning for the RPS button.\r\n");
-    goToPoint(RPS_BUTTON_X, RPS_BUTTON_Y, .5, .3, true, RPS_BUTTON_HEADING, false, 0.0);
+    goToPoint(RPS_BUTTON_X, RPS_BUTTON_Y, .4, .25, true, RPS_BUTTON_HEADING - 15, false, 0.0);
 
     // Press the RPS button
     SD.Printf("Pressing the RPS button.\r\n");
@@ -217,14 +240,12 @@ void finalRoutine()
     armServo.SetDegree(30);
 
     // Move to bottom of ramp
-    SD.Printf("Positioning to move up the ramp.\r\n");
-    goToPoint(28.75, 16.75, 1.0, .4, false, 0.0, false, 0.0);
+    SD.Printf("Positioning to move up the ramp\r\n");
+    goToPoint(28, 16.75, .5, .25, false, 0.0, false, 0.0);
 
     // Move up ramp and stop somewhere near the top
     SD.Printf("Moving up the ramp.\r\n");
-    goToPoint(32, 55, .5, .7, false, 0.0, false, 0.0);
-
-    /* Everything from here checks if the deadzone is over yet so that there's an "escape plan" should we lose RPS in the deadzone */
+    goToPoint(28, 55, 1.5, .6, false, 0.0, false, 0.0);
 
     // Positioning for the foosball task
     if (!hasExhaustedDeadzone)
@@ -259,6 +280,17 @@ void finalRoutine()
     armServo.SetDegree(30);
     Sleep(1.0);
 
+    // Going to the left part
+    if (!hasExhaustedDeadzone)
+    {
+        goToPoint(20, 48, 1.0, .5, false, 0.0, false, 0.0);
+    }
+
+    if (!hasExhaustedDeadzone)
+    {
+        goToPoint(8, 48, .5, 1.0, false, 0.0, false, 0.0);
+    }
+
     // Position for the lever
     // Todo - Decide if we want to approach head-on or from the side (from the side would probably be more consistent but would require slightly more precise positioning, I guess
     if (!hasExhaustedDeadzone)
@@ -280,10 +312,7 @@ void finalRoutine()
     // If it hits the deadzone, it should skip to here within a few seconds after it gets back to RPS
     SD.Printf("Going to the top of the return ramp.\r\n");
     goToPoint(6, 55.0, 2.0, 1.0, false, 0.0, false, 0.0);
-
-    // Go down the ramp and in front of the end button
-    SD.Printf("Going down the ramp and into the end button.\r\n");
-    goToPoint(6, 8.0, 2.0, 1.0, false, 0.0, false, 0.0);
+    */
 }
 
 // Initializing requisite systems
