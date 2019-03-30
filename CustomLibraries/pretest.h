@@ -2,7 +2,6 @@
 #define SETUP_H
 
 // Imports
-#include "constants.h" // Gives access to global RPS values
 
 // Initializing requisite systems
 void init()
@@ -19,7 +18,7 @@ void calibrate()
 
     // Token
     loopUntilTouch();
-    loopWhileNoRPS();
+    loopUntilValidRPS();
     TOKEN_X = RPS.X();
     TOKEN_Y = RPS.Y();
     TOKEN_HEADING = RPS.Heading();
@@ -30,7 +29,7 @@ void calibrate()
 
     // DDR Blue (Far) Button
     loopUntilTouch();
-    loopWhileNoRPS();
+    loopUntilValidRPS();
     DDR_BLUE_LIGHT_X = RPS.X();
     DDR_LIGHT_Y = RPS.Y();
     SD.Printf("DDR Blue X: %f\r\n", DDR_BLUE_LIGHT_X);
@@ -39,7 +38,7 @@ void calibrate()
 
     // RPS Button
     loopUntilTouch();
-    loopWhileNoRPS();
+    loopUntilValidRPS();
     RPS_BUTTON_X = RPS.X();
     RPS_BUTTON_Y = RPS.Y();
     RPS_BUTTON_HEADING = RPS.Heading();
@@ -51,7 +50,7 @@ void calibrate()
     // Foosball Start
     // Todo - Measure how far the right side is from the left side to eliminate a sampling point 
     loopUntilTouch();
-    loopWhileNoRPS();
+    loopUntilValidRPS();
     FOOSBALL_START_X = RPS.X();
     FOOSBALL_START_Y = RPS.Y();
     SD.Printf("Foosball Start X: %f\r\n", FOOSBALL_START_X);
@@ -61,7 +60,7 @@ void calibrate()
     // Lever
     // Todo - Figure out the best place to do lever from 
     loopUntilTouch();
-    loopWhileNoRPS();
+    loopUntilValidRPS();
     LEVER_X = RPS.X();
     LEVER_Y = RPS.Y();
     LEVER_HEADING = RPS.Heading();

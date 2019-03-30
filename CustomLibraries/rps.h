@@ -1,5 +1,3 @@
-// This file holds the utility functions that need RPS to function
-
 #ifndef RPS_H
 #define RPS_H
 

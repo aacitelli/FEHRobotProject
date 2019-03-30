@@ -1,11 +1,17 @@
-// Generally, this holds methods that convert one thing to another thing
-
 #ifndef CONVERSIONS_H
 #define CONVERSIONS_H
 
 // Imports
-#include "CustomLibraries/constants.h"
 #include <FEHRPS.h>
+// Custom Libraries
+// Todo - Trim these down to what we actually need
+
+// Needed for sin/cos, etc.
+using namespace std;
+
+// Radian <-> Degree
+float radianToDegree(float radianValue) { return radianValue * (180.0 / PI); }
+float degreeToRadian(float degreeValue) { return degreeValue * (PI / 180.0); }
 
 // If there's distance between QR code and centroid, this is implemented into the relevant functions 
 float rpsXToCentroidX()
@@ -46,10 +52,6 @@ float rpsYToCentroidY()
     else
         return RPS.Y() - (DISTANCE_BETWEEN_RPS_AND_CENTROID * cos(degreeToRadian(RPS.Heading() - 270)));
 }
-
-// Radian <-> Degree 
-float radianToDegree(float radianValue) { return radianValue * (180.0 / PI); }
-float degreeToRadian(float degreeValue) { return degreeValue * (PI / 180.0); }
 
 // Takes in an angle and returns whatever's 180 degrees from it, accounting for overflow for high angles
 float rotate180Degrees(float degrees)

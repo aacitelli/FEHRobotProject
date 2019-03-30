@@ -1,8 +1,6 @@
 #ifndef CUSTOMUTILITY_H
 #define CUSTOMUTILITY_H
 
-#include <FEHRPS.h>
-
 using namespace std;
 
 // Distance Formula

@@ -1,4 +1,3 @@
-// In short, tells the compiler to not make duplicates of this header file
 #ifndef CUSTOMCONSTANTS_H
 #define CUSTOMCONSTANTS_H
 
@@ -6,6 +5,8 @@
 #include <FEHMotor.h>
 #include <FEHServo.h>
 #include <FEHIO.h>
+
+// No custom library imports needed (screws up all sorts of things, anyways)
 
 // I/O 
 FEHMotor leftMotor(FEHMotor::Motor0, 9.0);

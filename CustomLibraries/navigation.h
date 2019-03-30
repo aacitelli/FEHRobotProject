@@ -2,14 +2,20 @@
 #define CUSTOMNAVIGATION_H
 
 // Requisite Libraries
-#include "constants.h" // Used to get references to the motors
-#include "utility.h" // Used for unit conversions and widely applicable functions
+// Custom Libraries
+// Todo - Trim these down to what we actually need
 
 #include <FEHLCD.h>
 #include <FEHSD.h>
 #include <FEHRPS.h>
 
+#include "rps.h"
+#include "utility.h"
+
+void turnNoRPS(float currentHeading, float endHeading);
+
 // Function Predeclarations
+// Todo - Get rid of these
 void turn(float endHeading);
 void turn(float endX, float endY);
 float getDesiredHeading(float x1, float y1, float x2, float y2);
@@ -38,7 +44,7 @@ void goToPoint(float endX, float endY, float distanceTolerance, float percentage
     SD.Printf("goToPoint: endHeading: %f\r\n", endHeading);
     SD.Printf("goToPoint: Is Timed (1 = Yes, 2 = No): %d\r\n", isTimed);
     SD.Printf("goToPoint: Time: %f\r\n", time);
-    SD.Printf("goToPoint: Should Go Backwards (1 = Yes, 2 = No): %d\r\n", shouldGoBackwards)
+    SD.Printf("goToPoint: Should Go Backwards (1 = Yes, 2 = No): %d\r\n", shouldGoBackwards);
 
     // Ensures we go into turn() with valid RPS, and handles the case where we hit a deadzone during the RPS checks 
     // This is one of the weirder loops in the program, don't worry about how it works
@@ -269,7 +275,8 @@ void turn (float endHeading)
     SD.Printf("turn: Entered function with currentHeading %f and endHeading %f.\r\n", RPS.Heading(), endHeading);
 
     // Don't want to check the tolerance check until RPS is completely valid 
-    loopWhileNoRPS();
+    // Todo - Replace this w/ the more exhaustive check
+    loopUntilValidRPS();
 
     // Todo - Make it start turning even if it doesn't have RPS based on last remembered values so that we don't have to wait for RPS to be valid to start 
     // Generally, turn() is called as part of goToPoint, which can easily make small autocorrections, hence why this threshold doesn't need to be super small   
@@ -346,7 +353,7 @@ void turn (float endHeading)
         Sleep(.01);
 
         // Need RPS to go through the next tolerance check 
-        loopWhileNoRPS();
+        loopUntilValidRPS();
     }
 
     SD.Printf("turn: Given currentHeading = %f, endHeading = %f, robot has turned to within a specified tolerance.\r\n");
