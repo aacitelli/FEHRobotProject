@@ -64,13 +64,21 @@ void goToPoint(float endX, float endY, float distanceTolerance, float percentage
         return;
     }
 
-    turn(endX, endY);
+    // If it's supposed to turn forwards, just turn towards the point 
+    if (!shouldGoBackwards)
+        turn(endX, endY);
+    
+    // Otherwise, if it's supposed to turn backwards, turn to 180 degrees away from that point 
+    // Todo - Consider replacing RPS.X with lastValidX (and so on) throughout the code to always use the cached values (I don't think this is necessary, but could be a good sanity check)
+    else 
+        turn(rotate180Degrees(getDesiredHeading(RPS.X(), RPS.Y(), endX, endY))); // Todo - This statement could be cleaned up a bit logically 
 
     // Debug 
     SD.Printf("goToPoint: Entering distance tolerance check.\r\n");
     
     // Tolerance Loop Setup 
     int iterationCount  = 0;
+    float desiredHeading;
 
     // Step #2 of Method - Go To The Point 
     while (getDistance(rpsXToCentroidX(), rpsYToCentroidY(), endX, endY) > distanceTolerance)
@@ -93,7 +101,11 @@ void goToPoint(float endX, float endY, float distanceTolerance, float percentage
 
         // If it gets to this point, RPS values are valid, meaning we can update everything and make new, updated decisions for positioning
         updateLastValidRPSValues();
-        float desiredHeading = getDesiredHeading(rpsXToCentroidX(), rpsYToCentroidY(), endX, endY);
+
+        if (!shouldGoBackwards)
+            desiredHeading = getDesiredHeading(rpsXToCentroidX(), rpsYToCentroidY(), endX, endY);
+        else 
+            desiredHeading = rotate180Degrees(getDesiredHeading(rpsXToCentroidX(), rpsYToCentroidY(), endX, endY));
 
         // Debug Output
         clearLCD();
@@ -119,56 +131,118 @@ void goToPoint(float endX, float endY, float distanceTolerance, float percentage
             // Checking which direction we need to turn to get back to the correct heading and acting accordingly
             else if (shouldTurnLeft(RPS.Heading(), desiredHeading))
             {
-                // Small Correction Necessary (0-10 Degrees - Small disparity between motor powers )
-                if (smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) >= 0 && smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) < 10)
+                if (!shouldGoBackwards)
                 {
-                    SD.Printf("goToPoint: Given currentHeading = %f, endHeading = %f, turning slow-speed left to autocorrect.\r\n", RPS.Heading(), desiredHeading);
-                    leftMotor.SetPercent(LEFT_MOTOR_PERCENT * percentageOfFullSpeed * .8);
-                    rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * percentageOfFullSpeed);
-                }
+                    // Small Correction Necessary (0-10 Degrees - Small disparity between motor powers )
+                    if (smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) >= 0 && smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) < 10)
+                    {
+                        SD.Printf("goToPoint: Given currentHeading = %f, endHeading = %f, turning slow-speed left to autocorrect.\r\n", RPS.Heading(), desiredHeading);
+                        leftMotor.SetPercent(LEFT_MOTOR_PERCENT * percentageOfFullSpeed * .8);
+                        rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * percentageOfFullSpeed);
+                    }
 
-                // Medium Correction Necessary (10-20 Degrees - Medium disparity between motor powers )
-                else if (smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) >= 10 && smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) < 20)
-                {
-                    SD.Printf("goToPoint: Given currentHeading = %f, endHeading = %f, turning medium-speed left to autocorrect.\r\n", RPS.Heading(), desiredHeading);
-                    leftMotor.SetPercent(LEFT_MOTOR_PERCENT * percentageOfFullSpeed * .7);
-                    rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * percentageOfFullSpeed);
-                }
+                    // Medium Correction Necessary (10-20 Degrees - Medium disparity between motor powers )
+                    else if (smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) >= 10 && smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) < 20)
+                    {
+                        SD.Printf("goToPoint: Given currentHeading = %f, endHeading = %f, turning medium-speed left to autocorrect.\r\n", RPS.Heading(), desiredHeading);
+                        leftMotor.SetPercent(LEFT_MOTOR_PERCENT * percentageOfFullSpeed * .7);
+                        rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * percentageOfFullSpeed);
+                    }
 
-                // Large Correction Necessary (20-30 Degrees - Largest disparity between motor powers)
-                else if (smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) >= 20 && smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) < 30)
+                    // Large Correction Necessary (20-30 Degrees - Largest disparity between motor powers)
+                    else if (smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) >= 20 && smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) < 30)
+                    {
+                        SD.Printf("goToPoint: Given currentHeading = %f, endHeading = %f, turning fast-speed left to autocorrect.\r\n", RPS.Heading(), desiredHeading);
+                        leftMotor.SetPercent(LEFT_MOTOR_PERCENT * percentageOfFullSpeed * .6);
+                        rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * percentageOfFullSpeed);
+                    }
+                }  
+
+                // If it's going backwards, the motor powers need to be inverted, otherwise they'll autocorrect the wrong way 
+                else 
                 {
-                    SD.Printf("goToPoint: Given currentHeading = %f, endHeading = %f, turning fast-speed left to autocorrect.\r\n", RPS.Heading(), desiredHeading);
-                    leftMotor.SetPercent(LEFT_MOTOR_PERCENT * percentageOfFullSpeed * .6);
-                    rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * percentageOfFullSpeed);
-                }
+                    // Small Correction Necessary (0-10 Degrees - Smallest disparity between motor powers)
+                    if (smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) >= 0 && smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) < 10)
+                    {
+                        SD.Printf("goToPoint: (Going backwards) Given currentHeading = %f, endHeading = %f, turning slow-speed left to autocorrect.\r\n", RPS.Heading(), desiredHeading);
+                        leftMotor.SetPercent(LEFT_MOTOR_PERCENT * percentageOfFullSpeed);
+                        rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * percentageOfFullSpeed * .8);
+                    }
+
+                    // Medium Correction Necessary (10-20 Degrees - Medium disparity between motor powers)
+                    else if (smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) >= 10 && smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) < 20)
+                    {
+                        SD.Printf("goToPoint: (Going backwards) Given currentHeading = %f, endHeading = %f, turning medium-speed left to autocorrect.\r\n", RPS.Heading(), desiredHeading);
+                        leftMotor.SetPercent(LEFT_MOTOR_PERCENT * percentageOfFullSpeed);
+                        rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * percentageOfFullSpeed * .7);
+                    }
+
+                    // Large Correction Necessary (20-30 Degrees - Largest disparity between motor powers)
+                    else if (smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) >= 20 && smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) < 30)
+                    {
+                        SD.Printf("goToPoint: (Going backwards) Given currentHeading = %f, endHeading = %f, turning fast-speed left to autocorrect.\r\n", RPS.Heading(), desiredHeading);
+                        leftMotor.SetPercent(LEFT_MOTOR_PERCENT * percentageOfFullSpeed);
+                        rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * percentageOfFullSpeed * .6);
+                    }
+                }              
             }
 
+            // Otherwise, it needs to turn right 
             else
             {
-                // Small Correction Necessary (0-10 Degrees - Smallest disparity between motor powers)
-                if (smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) >= 0 && smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) < 10)
+                if (!shouldGoBackwards)
                 {
-                    SD.Printf("goToPoint: Given currentHeading = %f, endHeading = %f, turning slow-speed left to autocorrect.\r\n", RPS.Heading(), desiredHeading);
-                    leftMotor.SetPercent(LEFT_MOTOR_PERCENT * percentageOfFullSpeed);
-                    rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * percentageOfFullSpeed * .8);
+                    // Small Correction Necessary (0-10 Degrees - Smallest disparity between motor powers)
+                    if (smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) >= 0 && smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) < 10)
+                    {
+                        SD.Printf("goToPoint: Given currentHeading = %f, endHeading = %f, turning slow-speed left to autocorrect.\r\n", RPS.Heading(), desiredHeading);
+                        leftMotor.SetPercent(LEFT_MOTOR_PERCENT * percentageOfFullSpeed);
+                        rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * percentageOfFullSpeed * .8);
+                    }
+
+                    // Medium Correction Necessary (10-20 Degrees - Medium disparity between motor powers)
+                    else if (smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) >= 10 && smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) < 20)
+                    {
+                        SD.Printf("goToPoint: Given currentHeading = %f, endHeading = %f, turning medium-speed left to autocorrect.\r\n", RPS.Heading(), desiredHeading);
+                        leftMotor.SetPercent(LEFT_MOTOR_PERCENT * percentageOfFullSpeed);
+                        rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * percentageOfFullSpeed * .7);
+                    }
+
+                    // Large Correction Necessary (20-30 Degrees - Largest disparity between motor powers)
+                    else if (smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) >= 20 && smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) < 30)
+                    {
+                        SD.Printf("goToPoint: Given currentHeading = %f, endHeading = %f, turning fast-speed left to autocorrect.\r\n", RPS.Heading(), desiredHeading);
+                        leftMotor.SetPercent(LEFT_MOTOR_PERCENT * percentageOfFullSpeed);
+                        rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * percentageOfFullSpeed * .6);
+                    }
                 }
 
-                // Medium Correction Necessary (10-20 Degrees - Medium disparity between motor powers)
-                else if (smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) >= 10 && smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) < 20)
+                else 
                 {
-                    SD.Printf("goToPoint: Given currentHeading = %f, endHeading = %f, turning medium-speed left to autocorrect.\r\n", RPS.Heading(), desiredHeading);
-                    leftMotor.SetPercent(LEFT_MOTOR_PERCENT * percentageOfFullSpeed);
-                    rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * percentageOfFullSpeed * .7);
-                }
+                    // Small Correction Necessary (0-10 Degrees - Small disparity between motor powers )
+                    if (smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) >= 0 && smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) < 10)
+                    {
+                        SD.Printf("goToPoint: (Going backwards) Given currentHeading = %f, endHeading = %f, turning slow-speed left to autocorrect.\r\n", RPS.Heading(), desiredHeading);
+                        leftMotor.SetPercent(LEFT_MOTOR_PERCENT * percentageOfFullSpeed * .8);
+                        rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * percentageOfFullSpeed);
+                    }
 
-                // Large Correction Necessary (20-30 Degrees - Largest disparity between motor powers)
-                else if (smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) >= 20 && smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) < 30)
-                {
-                    SD.Printf("goToPoint: Given currentHeading = %f, endHeading = %f, turning fast-speed left to autocorrect.\r\n", RPS.Heading(), desiredHeading);
-                    leftMotor.SetPercent(LEFT_MOTOR_PERCENT * percentageOfFullSpeed);
-                    rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * percentageOfFullSpeed * .6);
-                }
+                    // Medium Correction Necessary (10-20 Degrees - Medium disparity between motor powers )
+                    else if (smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) >= 10 && smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) < 20)
+                    {
+                        SD.Printf("goToPoint: (Going backwards) Given currentHeading = %f, endHeading = %f, turning medium-speed left to autocorrect.\r\n", RPS.Heading(), desiredHeading);
+                        leftMotor.SetPercent(LEFT_MOTOR_PERCENT * percentageOfFullSpeed * .7);
+                        rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * percentageOfFullSpeed);
+                    }
+
+                    // Large Correction Necessary (20-30 Degrees - Largest disparity between motor powers)
+                    else if (smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) >= 20 && smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) < 30)
+                    {
+                        SD.Printf("goToPoint: (Going backwards) Given currentHeading = %f, endHeading = %f, turning fast-speed left to autocorrect.\r\n", RPS.Heading(), desiredHeading);
+                        leftMotor.SetPercent(LEFT_MOTOR_PERCENT * percentageOfFullSpeed * .6);
+                        rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * percentageOfFullSpeed);
+                    }
+                }                
             }
         }
 
