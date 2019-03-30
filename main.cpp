@@ -23,8 +23,13 @@
     Saturday Todo: 
 
     Know How To Do: 
-    Test goToPoint autocorrection amounts (don't need to be on a course to do this) to make sure the turn radius is enough to fix any issue 
-    Test turn autocorrection amounts to make sure it doesn't overshoot at all 
+    - Test goToPoint autocorrection amounts (don't need to be on a course to do this) to make sure the turn radius is enough to fix any issue 
+    - Test turn autocorrection amounts to make sure it doesn't overshoot at all 
+
+    Other Stuff: 
+    - Get robot consistently going up the ramp 
+    - Get robot at least started on Foosball so that we know what we need to improve in the coming week 
+    - Figure out which side of the lever is better (right is probably better, but look at the actual dimensions and at the angle we'll be at)
 
 */
 
