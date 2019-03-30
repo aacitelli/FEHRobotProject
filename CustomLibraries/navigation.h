@@ -27,6 +27,7 @@ void turnSouthAndGoUntilRPS(float startHeading);
 void updateLastValidRPSValues();
 float rpsXToCentroidX();
 float rpsYToCentroidY();
+void getBackToRPSFromDeadzone(float startX, float startY, float startHeading);
 
 using namespace std;
 
@@ -57,7 +58,7 @@ void goToPoint(float endX, float endY, float distanceTolerance, float percentage
 
         // Does what you think it does
         SD.Printf("goToPoint: Turning roughly south and going until RPS.\r\n");
-        turnSouthAndGoUntilRPS(lastValidHeading);
+        getBackToRPSFromDeadzone(lastValidX, lastValidY, lastValidHeading);
 
         // Escapes this call of goToPoint because it doesn't really have RPS any more
         return;
@@ -193,7 +194,7 @@ void goToPoint(float endX, float endY, float distanceTolerance, float percentage
 
             // Does what you think it does
             SD.Printf("goToPoint: Turning roughly south and going until RPS.\r\n");
-            turnSouthAndGoUntilRPS(lastValidHeading);
+            getBackToRPSFromDeadzone(lastValidX, lastValidY, lastValidHeading);
 
             // Escapes this call of goToPoint because it doesn't really have RPS any more
             return;
@@ -276,7 +277,20 @@ void turn (float endHeading)
 
     // Don't want to check the tolerance check until RPS is completely valid 
     // Todo - Replace this w/ the more exhaustive check
-    loopUntilValidRPS();
+    if (loopUntilValidRPS() == -2)
+    {
+        SD.Printf("goToPoint: Deadzone has become enabled again.\r\n");
+
+        // Causes the program to skip certain goToPoint calls
+        hasExhaustedDeadzone = true;
+
+        // Does what you think it does
+        SD.Printf("goToPoint: Turning roughly south and going until RPS.\r\n");
+        getBackToRPSFromDeadzone(lastValidX, lastValidY, lastValidHeading);
+
+        // Escapes this call of goToPoint because it doesn't really have RPS any more
+        return;
+    }
 
     // Todo - Make it start turning even if it doesn't have RPS based on last remembered values so that we don't have to wait for RPS to be valid to start 
     // Generally, turn() is called as part of goToPoint, which can easily make small autocorrections, hence why this threshold doesn't need to be super small   
@@ -353,7 +367,20 @@ void turn (float endHeading)
         Sleep(.01);
 
         // Need RPS to go through the next tolerance check 
-        loopUntilValidRPS();
+        if (loopUntilValidRPS() == -2)
+        {
+            SD.Printf("goToPoint: Deadzone has become enabled again.\r\n");
+
+            // Causes the program to skip certain goToPoint calls
+            hasExhaustedDeadzone = true;
+
+            // Does what you think it does
+            SD.Printf("goToPoint: Turning roughly south and going until RPS.\r\n");
+            getBackToRPSFromDeadzone(lastValidX, lastValidY, lastValidHeading);
+
+            // Escapes this call of goToPoint because it doesn't really have RPS any more
+            return;
+        }
     }
 
     SD.Printf("turn: Given currentHeading = %f, endHeading = %f, robot has turned to within a specified tolerance.\r\n");
