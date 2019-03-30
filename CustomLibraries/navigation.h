@@ -521,31 +521,31 @@ void turn (float endHeading)
             SD.Printf("turn: Given currentHeading = %f and endHeading = %f, robot is turning left.\r\n", RPS.Heading(), endHeading);
 
             // Todo - If optimizing for time, see how low we can get these thresholds while still being precise enough when it matters 
-            // 60+ Degrees Away - Turn as quickly as possible
+            // 50+ Degrees Away - Turn as quickly as possible
             if (smallestDistanceBetweenHeadings(RPS.Heading(), endHeading) > 50)
             {
                 SD.Printf("turn: Robot is more than 60 degrees away from endHeading. Turning really fast.\r\n");
 
-                leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .4);
-                currentLeftMotorPercent = -LEFT_MOTOR_PERCENT * .4;
+                leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .55);
+                currentLeftMotorPercent = -LEFT_MOTOR_PERCENT * .55;
 
-                rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * .4);
-                currentRightMotorPercent = RIGHT_MOTOR_PERCENT * .4;
+                rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * .55);
+                currentRightMotorPercent = RIGHT_MOTOR_PERCENT * .55;
             }
 
-            // 30-60 Degrees Away - Turn quick, but not super quick 
+            // 25-50 Degrees Away - Turn quick, but not super quick
             else if (smallestDistanceBetweenHeadings(RPS.Heading(), endHeading) > 25)
             {
                 SD.Printf("turn: Robot is more than 30 degrees away from endHeading. Turning fast, but not super fast.\r\n");
 
-                leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .3);
-                currentLeftMotorPercent = -LEFT_MOTOR_PERCENT * .3;
+                leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .375);
+                currentLeftMotorPercent = -LEFT_MOTOR_PERCENT * .375;
 
-                rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * .3);
-                currentRightMotorPercent = RIGHT_MOTOR_PERCENT * .3;
+                rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * .375);
+                currentRightMotorPercent = RIGHT_MOTOR_PERCENT * .375;
             }
 
-            // 0-30 Degrees Away - Turn slowly (precision matters) 
+            // 0-25 Degrees Away - Turn slowly (precision matters)
             else 
             {
                 SD.Printf("turn: Robot is less than 30 degrees away from endHeading. Turning more slowly.\r\n");
@@ -568,11 +568,11 @@ void turn (float endHeading)
             {
                 SD.Printf("turn: Robot is more than 30 degrees away from endHeading. Turning faster.\r\n");
 
-                leftMotor.SetPercent(LEFT_MOTOR_PERCENT * .4);
-                currentLeftMotorPercent = LEFT_MOTOR_PERCENT * .4;
+                leftMotor.SetPercent(LEFT_MOTOR_PERCENT * .55);
+                currentLeftMotorPercent = LEFT_MOTOR_PERCENT * .55;
 
-                rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .4);
-                currentRightMotorPercent = -RIGHT_MOTOR_PERCENT * .4;
+                rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .55);
+                currentRightMotorPercent = -RIGHT_MOTOR_PERCENT * .55;
             }
 
             // 25-50 Degrees Away - Turn quick, but not super quick
@@ -580,11 +580,11 @@ void turn (float endHeading)
             {
                 SD.Printf("turn: Robot is more than 30 degrees away from endHeading. Turning faster.\r\n");
 
-                leftMotor.SetPercent(LEFT_MOTOR_PERCENT * .3);
-                currentLeftMotorPercent = LEFT_MOTOR_PERCENT * .3;
+                leftMotor.SetPercent(LEFT_MOTOR_PERCENT * .375);
+                currentLeftMotorPercent = LEFT_MOTOR_PERCENT * .375;
 
-                rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .3);
-                currentRightMotorPercent = -RIGHT_MOTOR_PERCENT * .3;
+                rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .375);
+                currentRightMotorPercent = -RIGHT_MOTOR_PERCENT * .375;
             }
 
             // 0-25 Degrees Away - Turn slowly (precision matters)
