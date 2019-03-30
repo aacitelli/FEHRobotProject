@@ -24,7 +24,8 @@
 
     Know How To Do: 
     - Test goToPoint autocorrection amounts (don't need to be on a course to do this) to make sure the turn radius is enough to fix any issue 
-    - Test turn autocorrection amounts to make sure it doesn't overshoot at all 
+        - Test how it reacts to high speeds as well and consider scaling differently at higher speeds if it ends up being an issue 
+    - Test turn autocorrection amounts to make sure it does actually end up within a few degrees of what it should be 100% of the time 
 
     Other Stuff: 
     - Get robot consistently going up the ramp 
@@ -33,19 +34,19 @@
 
 */
 
-/* NEXT WEEK'S TODO LISLT
+/* NEXT WEEK'S TODO LIST
  *
  * HARDWARE (Loosely prioritized)
  *
  * - Make sure everything relevant is covered in tape
- * - Make any aesthetic changes we want to (I'm 100% fine with going past 120 if it's for this)
- * - Re-affix the QR code - Several Mechanisms (Tape, Screw, Rubber Cement / Loctite)
+ * - Make any aesthetic changes we want to (I'm 100% fine with going past $120 if it's for this, we gotta swank our robot out)
+ * - Re-affix the QR code - Implement several points of failure (Tape, Screw, Rubber Cement / Loctite)
+ *      - Reminds me - Make sure everything attached to the robot is securely attached (I'm looking at you, Proteus, though we have to make sure the whole thing is good)
  *
  * SOFTWARE (Highest Priority -> Lowest Priority)
  *
  * - Getting closer and closer to 100 points is the priority
  *      - Slight tuning to make it decently fast but at the same time precise enough to work consistently
- * - Clean up the codebase - It's already kind of organized, but NGL, this thing is kind of a mess
  * - Do documentation (/**) for every function in here
  *
  * MISC

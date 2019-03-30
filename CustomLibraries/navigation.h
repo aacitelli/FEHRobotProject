@@ -117,6 +117,8 @@ void goToPoint(float endX, float endY, float distanceTolerance, float percentage
         {
             SD.Printf("goToPoint: Robot's heading is at least minorly off (3+ Degrees).\r\n");
 
+            // Todo - This is a LOT of code - Consider further methodizing this to make it more readable (though I kinda like it how it is)
+
             // This may need tweaked for when we're going really fast, but past a certain point that's an issue with your tolerance being too high
             if (getDistance(rpsXToCentroidX(), rpsYToCentroidY(), endX, endY) > 1 && smallestDistanceBetweenHeadings(RPS.Heading(), desiredHeading) >= 30)
             {
