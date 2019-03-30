@@ -45,7 +45,7 @@
  * - Figure out if high tolerances with goToPoint are a good thing
  *      - I'm still not sure if the high tolerances are what's causing the offset, or if low tolerances are still causing overshoots and correction
  *          - We just need testing to figure this out
- * - Getting closer and closer to 100 points is the priority
+ * - Getting closer and closer to 100 points consistently is the priority
  *      - Slight tuning to make it decently fast but at the same time precise enough to work consistently is mostly what we need
  *      - No major overhauls necessary, though slight consistency reworks could be necessary
  *      - Might be a case of sacrificing speed for consistency, which I'm fine with, but beyond a certain point we legit just won't finish the course
@@ -65,7 +65,12 @@
  *
  * - Tweak turn() motor amounts to be faster (sacrificing a little bit of precision for speed - I think it's worth it, and I'll probably end up implementing this)
  *      - "Too much" is whenever it overshoots the end tolerance for long enough that the slower turn would overpass it
+ *      - "Too ligtle" is whenever it hits it consistently every time but could still be faster while achieving the same result
+ * - Raise the turn() angle tolerance because it's always run as part of goToPoint and that'll autocorrect for small inaccuracies while being faster overall
  * - Raise goToPoing passed-in speeds on segments that are consistent - Can shave probably a second off of a lot of these
+ *      - This just means modifying the constants in the goToPoint calls - Not a hard fix, but could cause instability and unreliability 
+ * - If we end up making goToPoint slower when closer, tweak that downshift to be later on in the timing (closer to the end point) so it gets slow as late as possible while still being precise enough
+ *      - Basically, keep the current system, but if the tolerance is greater, go on average a lot faster through the entire procedure
  *
  * */
 
@@ -80,13 +85,32 @@ void updateLastValidRPSValues();
 void turnSouthAndGoUntilRPS(float startHeading);
 void calibrate();
 
+void rpsSquare()
+{
+    while (true)
+    {
+        loopUntilValidRPS();
+        goToPoint(RPS.X(), RPS.Y() + 6, false, 0.0, false, 0.0, false);
+
+        loopUntilValidRPS();
+        goToPoint(RPS.X() + 6, RPS.Y(), false, 0.0, false, 0.0, false);
+
+        loopUntilValidRPS();
+        goToPoint(RPS.X(), RPS.Y() - 6, false, 0.0, false, 0.0, false);
+
+        loopUntilValidRPS();
+        goToPoint(RPS.X() - 6, RPS.Y(), false, 0, false, 0.0, false);
+    }
+}
+
 int main(void)
 {
     // Initializes RPS & SD Card
     init();
 
     // Calibration procedure
-    calibrate();
+    // calibrate();
+    rpsSquare();
 
     // This is where we put the token in
     armServo.SetDegree(30);
@@ -120,7 +144,7 @@ void finalRoutine()
     // Navigating to the token drop
     // 13.4, x, 23.3 Before
     SD.Printf("Going to token.\r\n");
-    goToPoint(TOKEN_X, TOKEN_Y, 1.0, .25, true, TOKEN_HEADING, false, 0.0, false);
+    goToPoint(TOKEN_X, TOKEN_Y, true, TOKEN_HEADING, false, 0.0, false);
 
     // Dropping the token
     SD.Printf("Depositing token.\r\n");
@@ -130,15 +154,16 @@ void finalRoutine()
 
     // Go to the side of one of the lights
     SD.Printf("Going to the side of one of the lights.\r\n");
-    goToPoint(16, 15, 1.0, .25, false, 0.0, false, 0.0, false);
+    goToPoint(16, 15, false, 0.0, false, 0.0, false);
 
     // Go on top of the near light
     SD.Printf("Going on top of the near light.\r\n");
-    goToPoint(DDR_BLUE_LIGHT_X - 4.5, DDR_LIGHT_Y, 1.0, .25, false, 0.0, false, 0.0, false);
+    goToPoint(DDR_BLUE_LIGHT_X - 4.5, DDR_LIGHT_Y, false, 0.0, false, 0.0, false);
 
+    // Reading light sensor output
     leftMotor.Stop();
     rightMotor.Stop();
-    Sleep(1.0);
+    Sleep(.5); // Todo - Remove this in end test
     SD.Printf("Light Sensor Output: %f\r\n", lightSensor.Value());
 
     // If the light is blue, do this pathfinding and press the blue button
@@ -149,10 +174,10 @@ void finalRoutine()
         SD.Printf("Light was detected as BLUE.\r\n");
 
         SD.Printf("Pathfinding above the blue light.\r\n");
-        goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y + 5, .75, .25, true, 270, false, 0.0, false); // Positioning above button
+        goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y + 5, true, 270, false, 0.0, false); // Positioning above button
 
         SD.Printf("Driving into the blue button.\r\n");
-        goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y - 3, .75, .35, false, 0.0, true, 8.0, false); // Hitting button for long enough to get bonus goal too
+        goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y - 3, false, 0.0, true, 8.0, false); // Hitting button for long enough to get bonus goal too
     }
 
     // Otherwise, the light is red, so do red button pathfinding and press the red button
@@ -163,23 +188,19 @@ void finalRoutine()
         SD.Printf("Light was detected as RED.\r\n");
 
         SD.Printf("Pathfinding above the red light.\r\n");
-        goToPoint(DDR_BLUE_LIGHT_X - 4.5, DDR_LIGHT_Y + 5, .75, .25, true, 270, false, 0.0, false); // Positioning above button
+        goToPoint(DDR_BLUE_LIGHT_X - 4.5, DDR_LIGHT_Y + 5, true, 270, false, 0.0, false); // Positioning above button
 
         SD.Printf("Driving into the red light.\r\n");
-        goToPoint(DDR_BLUE_LIGHT_X - 4.5, DDR_LIGHT_Y - 3, .75, .35, false, 0.0, true, 8.0, false); // Hitting button for long enough to get bonus goal too
+        goToPoint(DDR_BLUE_LIGHT_X - 4.5, DDR_LIGHT_Y - 3, false, 0.0, true, 8.0, false); // Hitting button for long enough to get bonus goal too
     }
 
     // Getting a little bit of spacing from DDR before going to the end button
     SD.Printf("Pathfinding a little bit above DDR so we can go back to the end button.\r\n");
-    goToPoint(DDR_BLUE_LIGHT_X - 2.0, DDR_LIGHT_Y + 3, 1.0, .3, false, 0.0, false, 0.0, false);
-
-    // Go down the ramp and in front of the end button
-    SD.Printf("Going down the ramp and into the end button.\r\n");
-    goToPoint(5.0, 5.0, 1.5, .4, false, 0.0, false, 0.0, false);
+    goToPoint(DDR_BLUE_LIGHT_X - 2.0, DDR_LIGHT_Y + 3, false, 0.0, false, 0.0, false);
 
     // Space and angle for the RPS button
     SD.Printf("Positioning for the RPS button.\r\n");
-    goToPoint(RPS_BUTTON_X, RPS_BUTTON_Y, .4, .25, true, RPS_BUTTON_HEADING - 15, false, 0.0, false);
+    goToPoint(RPS_BUTTON_X, RPS_BUTTON_Y, true, RPS_BUTTON_HEADING - 15, false, 0.0, false);
 
     // Press the RPS button
     SD.Printf("Pressing the RPS button.\r\n");
@@ -188,17 +209,17 @@ void finalRoutine()
 
     // Move to bottom of ramp
     SD.Printf("Positioning to move up the ramp\r\n");
-    goToPoint(28, 16.75, .5, .25, false, 0.0, false, 0.0, false);
+    goToPoint(28, 16.75, false, 0.0, false, 0.0, false);
 
     // Move up ramp and stop somewhere near the top
     SD.Printf("Moving up the ramp.\r\n");
-    goToPoint(28, 55, 1.5, .6, false, 0.0, false, 0.0, false);
+    goToPoint(28, 55, false, 0.0, false, 0.0, false);
 
     // Positioning for the foosball task
     if (!hasExhaustedDeadzone)
     {
         SD.Printf("Deadzone still negated. Positioning for foosball.\r\n");
-        goToPoint(FOOSBALL_START_X, FOOSBALL_START_Y, .5, .5, true, 0.0, false, 0.0, false);
+        goToPoint(FOOSBALL_START_X, FOOSBALL_START_Y, true, 0.0, false, 0.0, false);
     }
 
     else
@@ -214,7 +235,7 @@ void finalRoutine()
     if (!hasExhaustedDeadzone)
     {
         SD.Printf("Deadzone still negated. Performing foosball.\r\n");
-        goToPoint(FOOSBALL_END_X, FOOSBALL_END_Y, .5, .5, false, 0.0, false, 0.0, true);
+        goToPoint(FOOSBALL_END_X, FOOSBALL_END_Y, false, 0.0, false, 0.0, true);
     }
 
     else
@@ -230,12 +251,12 @@ void finalRoutine()
     // Going to the left part
     if (!hasExhaustedDeadzone)
     {
-        goToPoint(20, 48, 1.0, .5, false, 0.0, false, 0.0, false);
+        goToPoint(20, 48, false, 0.0, false, 0.0, false);
     }
 
     if (!hasExhaustedDeadzone)
     {
-        goToPoint(8, 48, .5, 1.0, false, 0.0, false, 0.0, false);
+        goToPoint(8, 48, false, 0.0, false, 0.0, false);
     }
 
     // Position for the lever
@@ -243,7 +264,7 @@ void finalRoutine()
     if (!hasExhaustedDeadzone)
     {
         SD.Printf("Deadzone still negated. Positioning for lever.\r\n");
-        goToPoint(LEVER_X, LEVER_Y, .75, .5, true, LEVER_HEADING, false, 1.5, false);
+        goToPoint(LEVER_X, LEVER_Y, true, LEVER_HEADING, false, 1.5, false);
     }
 
     else
@@ -258,7 +279,7 @@ void finalRoutine()
 
     // If it hits the deadzone, it should skip to here within a few seconds after it gets back to RPS
     SD.Printf("Going to the top of the return ramp.\r\n");
-    goToPoint(6, 55.0, 2.0, 1.0, false, 0.0, false, 0.0, false);
+    goToPoint(6, 55.0, false, 0.0, false, 0.0, false);
 }
 
 

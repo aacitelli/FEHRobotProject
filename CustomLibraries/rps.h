@@ -30,6 +30,7 @@ int loopUntilValidRPS()
 {
     while (RPS.X() == -1 || RPS.Y() == -1 || RPS.Heading() == -1 || RPS.X() == -2 || RPS.Y() == -2 || RPS.Heading() == -2)
     {
+        SD.Printf("Waiting for valid RPS.\r\n");
         if (RPS.X() == -1 || RPS.Y() == -1 || RPS.Heading() == -1)
         {
             Sleep(.01);

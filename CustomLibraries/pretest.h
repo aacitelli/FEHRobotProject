@@ -1,6 +1,10 @@
 #ifndef SETUP_H
 #define SETUP_H
 
+#include <FEHRPS.h>
+#include "rps.h"
+#include "utility.h"
+
 // Imports
 
 // Initializing requisite systems
@@ -12,6 +16,7 @@ void init()
 }
 
 // Gets RPS Coordinates - Used to basically negate the minor differences in each course 
+// Order: Token -> Far DDR Butotn -> RPS Button -> Foosball Start -> Lever (to the right is better positioning, I think)
 void calibrate()
 {
     SD.Printf("Running initialization procedure.\r\n");
@@ -56,6 +61,13 @@ void calibrate()
     SD.Printf("Foosball Start X: %f\r\n", FOOSBALL_START_X);
     SD.Printf("Foosball Start Y: %f\r\n", FOOSBALL_START_Y);
     Sleep(1.0);
+
+    // Foosball width is constant across courses, so we can just apply an offset to the start position to get the end position
+    const float FOOSBALL_HORIZONTAL_DISTANCE = 8;
+    FOOSBALL_END_X = FOOSBALL_START_X - FOOSBALL_HORIZONTAL_DISTANCE;
+
+    // Making the logical assumption that start and end are at the same height (as they need to be for the robot to go 180 degrees backwards, parallel to foosball)
+    FOOSBALL_END_Y = FOOSBALL_START_Y;
 
     // Lever
     // Todo - Figure out the best place to do lever from 

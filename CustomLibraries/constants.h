@@ -29,6 +29,8 @@ const int RIGHT_MOTOR_SIGN_FIX = 1;
 const float DEFAULT_MOTOR_PERCENT = 100;
 const float LEFT_MOTOR_PERCENT = LEFT_MOTOR_SIGN_FIX * DEFAULT_MOTOR_PERCENT;
 const float RIGHT_MOTOR_PERCENT = RIGHT_MOTOR_SIGN_FIX * DEFAULT_MOTOR_PERCENT;
+float currentLeftMotorPercent = -1;
+float currentRightMotorPercent = -1;
 
 // Cardinal Headings 
 const float NORTH = 90;

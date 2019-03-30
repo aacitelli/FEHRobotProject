@@ -1,6 +1,8 @@
 #ifndef CUSTOMUTILITY_H
 #define CUSTOMUTILITY_H
 
+#include "conversions.h"
+
 using namespace std;
 
 // Distance Formula
@@ -54,8 +56,17 @@ bool shouldTurnLeft(float startHeading, float endHeading)
 
     if (startHeading > endHeading) { cwDistance = startHeading - endHeading; } // CW No-Wrap
     else { cwDistance = (0 + startHeading) + (360 - endHeading); } // CW Wrap
+
     if (startHeading > endHeading) { ccwDistance = (0 + endHeading) + (360 - startHeading); } // CCW Wrap
     else { ccwDistance = endHeading - startHeading; } // CCW No-Wrap
+
+    // Debug, because this function is apparently still bugging out even though I've tested it extensively
+    /*
+    if (ccwDistance <= cwDistance)
+        SD.Printf("shouldTurnLeft: Given startHeading %f and endHeading %f, robot should turn left.\r\n", startHeading, endHeading);
+    else
+        SD.Printf("shouldTurnLeft: Given startHeading %f and endHeading %f, robot should turn right.\r\n", startHeading, endHeading);
+    */
 
     // If ccw is less than cw, return that it should turn left. Otherwise, return false
     return (ccwDistance <= cwDistance);
@@ -66,6 +77,7 @@ void loopUntilTouch()
     float x, y;
     while (!LCD.Touch(&x, &y))
     {
+        SD.Printf("Waiting for screen touch to progress in the program\r\n");
         clearLCD();
         LCD.WriteLine("Waiting for Screen Touch.");
         Sleep(.1);
