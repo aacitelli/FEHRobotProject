@@ -1,6 +1,6 @@
 # Robot Project
 
-This is the codebase for a 3-month-long project completed as part of ENGR 1281.02H, an project class in Ohio State's College of Engineering Honors Program. Videos and pictures of the project as well as more extensive documentation can be found on our team's official website, located at <URL>. 
+This is the codebase for a 3-month-long project completed as part of ENGR 1281.02H (Fundamentals of Engineering for Honors II - Robotics), a project class in Ohio State's College of Engineering Honors Program. Videos and pictures of the project as well as more extensive documentation can be found on our team's official website, located at <URL>. 
 
 Overall, the robot performed very well, placing at <insert placings after competition>. 
 
