@@ -11,12 +11,9 @@
 // Custom Libraries
 // Todo - Trim these down to what we actually need
 #include "CustomLibraries/constants.h"
-#include "CustomLibraries/conversions.h"
-#include "CustomLibraries/navigation.h"
 #include "CustomLibraries/posttest.h"
 #include "CustomLibraries/pretest.h"
-#include "CustomLibraries/rps.h"
-#include "CustomLibraries/utility.h"
+#include "CustomLibraries/navigation.h"
 
 /* 
 
@@ -45,19 +42,32 @@
  *
  * SOFTWARE (Highest Priority -> Lowest Priority)
  *
+ * - Figure out if high tolerances with goToPoint are a good thing
+ *      - I'm still not sure if the high tolerances are what's causing the offset, or if low tolerances are still causing overshoots and correction
+ *          - We just need testing to figure this out
  * - Getting closer and closer to 100 points is the priority
- *      - Slight tuning to make it decently fast but at the same time precise enough to work consistently
+ *      - Slight tuning to make it decently fast but at the same time precise enough to work consistently is mostly what we need
+ *      - No major overhauls necessary, though slight consistency reworks could be necessary
+ *      - Might be a case of sacrificing speed for consistency, which I'm fine with, but beyond a certain point we legit just won't finish the course
+ * - Make goToPoint go slower when it gets close (to avoid inaccuracy when going close quick)
+ *      - If we go with this (probably will) it's probably best to implement lower tolerances because this will ensure that we're being precise when it matters
  * - Do documentation (/**) for every function in here
  *
  * MISC
  *
  * - All the website and documentation stuff
  * - Any robot assignments that are due
- * - Final competition reflection (I'm assuming that's due)
+ * - Individual competition reflection (I'm assuming that's due)
  *
  * */
 
-// Todo - Write a really nice readme for the GitHub repo
+/* Possible Timesaves (in approximate order of how "preferable" they are):
+ *
+ * - Tweak turn() motor amounts to be faster (sacrificing a little bit of precision for speed - I think it's worth it, and I'll probably end up implementing this)
+ *      - "Too much" is whenever it overshoots the end tolerance for long enough that the slower turn would overpass it
+ * - Raise goToPoing passed-in speeds on segments that are consistent - Can shave probably a second off of a lot of these
+ *
+ * */
 
 using namespace std;
 
