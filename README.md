@@ -8,9 +8,9 @@ Overall, the robot performed very well, placing at <insert placings after compet
 
 Each team, made of 4 people, was to conceive, design, build, and program a small robot that navigates through a roughly 4' by 8' obstacle course. The robot intelligently completed tasks like dropping a token into a slot, measuring light sensor output and pathfinding to a button based on that output, pulling foosball score counters, and pressing a lever, among others. The course was important, but a large focus of the project was on documentation, project management, and the design process.
 
-## Team Members' Roles
+### Team Members' Roles
 
-Anden - Did ~95% of the code, with Jason helping out with one of the performance tests and some very early code. Did almost all of the testing. 
+Anden - Did ~95% of the code, with Jason helping out with one of the performance tests and some very early code. Did almost all of the testing. Was largely responsible for making sure the robot performed well on-course during performance tests and the competition itself. 
 
 Jason - Jason built most of the robot itself and fixed most of the mechanical or construction issues we had. Occasionally helped with the code. Worked some on documentation, report-writing, and the website. 
 
