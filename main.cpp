@@ -18,13 +18,13 @@
 #include "CustomLibraries/rps.h"
 #include "CustomLibraries/utility.h"
 
-/* Over The Weekend (Pre-Saturday Testing Preferably):
+/* 
 
-    - Finish SD Card debugging so that it's concise, yet exhaustive enough to easily debug what went wrong where
-        - Consider doing verbosity w/ 0 = Everything, 1 = Everything except for "guaranteed" functions, 2 = Functions that I'm still kinda sketchy about, and 3 = No Debug Output)
-        - Figure out how the LCD fits into all of this
-            - I'm considering eliminating LCD support altogether because you basically don't see the screen. Maybe just keep for calibration procedure?
-    - Redo the file structure and split header files into smaller, more organized files
+    Saturday Todo: 
+
+    Know How To Do: 
+    Test goToPoint autocorrection amounts (don't need to be on a course to do this) to make sure the turn radius is enough to fix any issue 
+    Test turn autocorrection amounts to make sure it doesn't overshoot at all 
 
 */
 
@@ -187,7 +187,7 @@ void finalRoutine()
 
     else
     {
-        SD.Printf("Deadzone is back in effect. Could not position initially for foosball.\r\n");
+        SD.Printf("Deadzone is in effect. Could not position initially for foosball.\r\n");
     }
 
     SD.Printf("Pressing down on foosball, even if a deadzone is still in effect.\r\n");
@@ -203,7 +203,7 @@ void finalRoutine()
 
     else
     {
-        SD.Printf("Deadzone is back in effect. Could not actually go backwards while doing foosball.\r\n");
+        SD.Printf("Deadzone is in effect. Could not actually go backwards while doing foosball.\r\n");
     }
 
     // This should be done regardless of if the deadzone is active or not
