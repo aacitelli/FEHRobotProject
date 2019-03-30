@@ -12,22 +12,13 @@
 #include "rps.h"
 #include "utility.h"
 
-void turnNoRPS(float currentHeading, float endHeading);
-
-// Function Predeclarations
-// Todo - Get rid of these
+void getBackToRPSFromDeadzone(float startX, float startY, float startHeading);
 void turn(float endHeading);
 void turn(float endX, float endY);
-float getDesiredHeading(float x1, float y1, float x2, float y2);
-bool shouldTurnLeft(float startHeading, float endHeading);
-void turn180DegreesAway(float endHeading);
-void turn180DegreesAway(float endX, float endY);
-float rotate180Degrees(float degrees);
-void turnSouthAndGoUntilRPS(float startHeading);
-void updateLastValidRPSValues();
-float rpsXToCentroidX();
-float rpsYToCentroidY();
-void getBackToRPSFromDeadzone(float startX, float startY, float startHeading);
+
+void turnNoRPS(float currentHeading, float endHeading);
+
+// Necessary function predeclarations
 
 using namespace std;
 

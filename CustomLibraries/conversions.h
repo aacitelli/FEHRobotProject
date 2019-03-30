@@ -3,8 +3,6 @@
 
 // Imports
 #include <FEHRPS.h>
-// Custom Libraries
-// Todo - Trim these down to what we actually need
 
 // Needed for sin/cos, etc.
 using namespace std;
