@@ -130,8 +130,6 @@ void finalRoutine()
     {
         clearLCD();
         LCD.WriteLine("BLUE.");
-        Sleep(1.0);
-
         SD.Printf("Light was detected as BLUE.\r\n");
 
         SD.Printf("Pathfinding above the blue light.\r\n");
@@ -146,8 +144,6 @@ void finalRoutine()
     {
         clearLCD();
         LCD.WriteLine("RED.");
-        Sleep(1.0);
-
         SD.Printf("Light was detected as RED.\r\n");
 
         SD.Printf("Pathfinding above the red light.\r\n");

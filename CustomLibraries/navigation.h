@@ -366,7 +366,7 @@ void turn (float endHeading)
 
         Sleep(.01);
 
-        // Need RPS to go through the next tolerance check 
+        // This function itself is naturally blocking; The return value is only relevant if it's in a deadzone 
         if (loopUntilValidRPS() == -2)
         {
             SD.Printf("goToPoint: Deadzone has become enabled again.\r\n");
@@ -392,6 +392,8 @@ void turn (float endHeading)
 void turnNoRPS(float currentHeading, float endHeading)
 {
     // Todo - See if I can up the motor speeds here a little bit to save time (only worth doing if we're at 100 points consistently) 
+    // To up the motor speeds, I'd have to figure out Seconds_Per_Degree for every motor speed I want to use and implement them all...
+    // That isn't really bad, but also isn't something I want to implement before we have more of the course consistently done 
 
     if (shouldTurnLeft(currentHeading, endHeading))
     {
