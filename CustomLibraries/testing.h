@@ -12,10 +12,10 @@ void rpsSquare()
 {
     while (true)
     {
-        goToPoint(10, 16, false, 0.0, false, 0.0, false);
-        goToPoint(16, 16, false, 0.0, false, 0.0, false);
-        goToPoint(16, 10, false, 0.0, false, 0.0, false);
-        goToPoint(10, 10, false, 0, false, 0.0, false);
+        goToPoint(10, 16, false, 0.0, false, 0.0, false, false);
+        goToPoint(16, 16, false, 0.0, false, 0.0, false, false);
+        goToPoint(16, 10, false, 0.0, false, 0.0, false, false);
+        goToPoint(10, 10, false, 0, false, 0.0, false, false);
     }
 }
 
