@@ -2,24 +2,40 @@
 #define CUSTOMUTILITY_H
 
 #include "conversions.h"
+#include "constants.h"
 
 using namespace std;
 
-// Distance Formula
+/**
+ * @brief getDistance is just distance formula. It's worth noting that most units will already be in inches because that's what RPS reports in.
+ * @param x1 is the first x coordinate.
+ * @param y1 is the first y coordinate.
+ * @param x2 is the second x coordinate.
+ * @param y2 is the second y coordinate.
+ * @return The length, in inches, of a line if it were to be drawn directly in between the two points (AKA distance between points, but fancy)
+ */
 float getDistance(float x1, float y1, float x2, float y2) { return sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2)); }
 
-// Used for debug
+/**
+ * @brief clearLCD does exactly what you think it does - Clears the LCD screen.
+ */
 void clearLCD() { LCD.Clear(FEHLCD::Black); LCD.SetFontColor(FEHLCD::White); }
 
-// Note - This picks whichever distance is less than 180 b/c that's the only case we care about when this function is used
-// This function doesn't care about which is the start and end, but the code copied over from shouldTurnLeft was way faster
-// Todo - Make this simpler b/c I initially just used the code from shouldTurnLeft - Current iteration is needlessly processor-intensive (though the impact is negligible)
+/**
+ * @brief smallestDistanceBetweenHeadings reports the smallest heading difference between two headings. Works by calculating clockwise and counterclockwise distances and making a decision based on which is smaller.
+ * @param startHeading is the first heading - Arbitrary choice which is start and end, but the robot's heading is generally the startHeading
+ * @param endHeading is the second heading - Arbitrary choice which is start and end, but the heading we're trying to turn to is generally the endHeading
+ * @return
+ */
 float smallestDistanceBetweenHeadings(float startHeading, float endHeading)
 {
     float cwDistance, ccwDistance;
 
+    // Clockwise options
     if (startHeading > endHeading) { cwDistance = startHeading - endHeading; } // CW, No-Wrap
     else { cwDistance = (0 + startHeading) + (360 - endHeading); } // CW, Wrap
+
+    // Counterclockwise options
     if (startHeading > endHeading) { ccwDistance = (0 + endHeading) + (360 - startHeading); } // CCW, Wrap
     else { ccwDistance = endHeading - startHeading; }
 
@@ -28,6 +44,30 @@ float smallestDistanceBetweenHeadings(float startHeading, float endHeading)
     return ccwDistance;
 }
 
+void gradualServoTurn(float endDegree)
+{
+    float currentDegree = 30;
+    while (currentDegree <= endDegree)
+    {
+        armServo.SetDegree(currentDegree);
+        currentDegree++;
+        Sleep(.01);
+    }
+    Sleep(.5);
+    armServo.SetDegree(30);
+    Sleep(.5);
+}
+
+/**
+ * @brief getDesiredHeading calculates and returns the angle necessary in order to point from point (x1, y1) to point (x2, y2).
+ * @param x1
+ * @param y1
+ * @param x2
+ * @param y2
+ * @return
+ *
+ * Note: Angles are the same as the unit circle, with "North" on our course being 90 Degrees.
+ */
 float getDesiredHeading(float x1, float y1, float x2, float y2)
 {
     float x_dot = x2 - x1;

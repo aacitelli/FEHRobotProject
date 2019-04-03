@@ -12,8 +12,7 @@
 FEHMotor leftMotor(FEHMotor::Motor0, 9.0);
 FEHMotor rightMotor(FEHMotor::Motor1, 9.0);
 FEHServo armServo(FEHServo::Servo0);
-DigitalInputPin leftBumpSwitch(FEHIO::P0_3);
-DigitalInputPin rightBumpSwitch(FEHIO::P0_3);
+DigitalInputPin bumpSwitch(FEHIO::P0_1);
 AnalogInputPin lightSensor(FEHIO::P0_0);
 
 // Calibration values for RPS pathfinding
@@ -29,6 +28,8 @@ const int RIGHT_MOTOR_SIGN_FIX = 1;
 const float DEFAULT_MOTOR_PERCENT = 100;
 const float LEFT_MOTOR_PERCENT = LEFT_MOTOR_SIGN_FIX * DEFAULT_MOTOR_PERCENT;
 const float RIGHT_MOTOR_PERCENT = RIGHT_MOTOR_SIGN_FIX * DEFAULT_MOTOR_PERCENT;
+
+// Tracks what percentage the motors are currently at - Purely for debugging
 float currentLeftMotorPercent = -1;
 float currentRightMotorPercent = -1;
 
@@ -42,8 +43,8 @@ const float WEST = 180;
 // to RPS when deadzone hits and the robot is still in it
 // Todo - Update these two variables, because I have no idea what motor speed (maybe 40?) I was at when I initially calculated these
 // Current variable values mean it went 690 Degrees in 5 seconds, just for reference 
-const float DEGREES_PER_SECOND = (690 / 5.0);
-const float SECONDS_PER_DEGREE = (5.0 / 690);
+const float DEGREES_PER_SECOND = (1080 / 10.0);
+const float SECONDS_PER_DEGREE = (10.0 / 1080);
 bool hasExhaustedDeadzone = false;
 float lastValidX, lastValidY, lastValidHeading;
 

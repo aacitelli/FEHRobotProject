@@ -4,6 +4,7 @@ CustomLibraries/navigation.h
 CustomLibraries/posttest.h
 CustomLibraries/pretest.h
 CustomLibraries/rps.h
+CustomLibraries/testing.h
 CustomLibraries/unused.h
 CustomLibraries/utility.h
 main.cpp

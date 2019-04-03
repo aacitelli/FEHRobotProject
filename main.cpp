@@ -14,22 +14,7 @@
 #include "CustomLibraries/posttest.h"
 #include "CustomLibraries/pretest.h"
 #include "CustomLibraries/navigation.h"
-
-/* 
-
-    Saturday Todo: 
-
-    Know How To Do: 
-    - Test goToPoint autocorrection amounts (don't need to be on a course to do this) to make sure the turn radius is enough to fix any issue 
-        - Test how it reacts to high speeds as well and consider scaling differently at higher speeds if it ends up being an issue 
-    - Test turn autocorrection amounts to make sure it does actually end up within a few degrees of what it should be 100% of the time 
-
-    Other Stuff: 
-    - Get robot consistently going up the ramp 
-    - Get robot at least started on Foosball so that we know what we need to improve in the coming week 
-    - Figure out which side of the lever is better (right is probably better, but look at the actual dimensions and at the angle we'll be at)
-
-*/
+#include "CustomLibraries/testing.h"
 
 /* NEXT WEEK'S TODO LIST
  *
@@ -85,35 +70,43 @@ void updateLastValidRPSValues();
 void turnSouthAndGoUntilRPS(float startHeading);
 void calibrate();
 
-void rpsSquare()
+void foosball()
 {
-    while (true)
-    {
-        loopUntilValidRPS();
-        goToPoint(RPS.X(), RPS.Y() + 6, false, 0.0, false, 0.0, false);
+    armServo.SetDegree(95);
 
-        loopUntilValidRPS();
-        goToPoint(RPS.X() + 6, RPS.Y(), false, 0.0, false, 0.0, false);
+    Sleep(.5);
 
-        loopUntilValidRPS();
-        goToPoint(RPS.X(), RPS.Y() - 6, false, 0.0, false, 0.0, false);
+    leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .3);
+    rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .3);
 
-        loopUntilValidRPS();
-        goToPoint(RPS.X() - 6, RPS.Y(), false, 0, false, 0.0, false);
-    }
+    Sleep(2.0);
+
+    leftMotor.Stop();
+    rightMotor.Stop();
 }
 
+/**
+ * @brief main is the function that is run at the start of the program. It serves as a hub for most other functions that the program has.
+ * @return a value of 0 if everything went right. No other return values currently supported, but theoretically could be in the future.
+ */
 int main(void)
 {
+    // foosball();
+
     // Initializes RPS & SD Card
     init();
 
+    // Testing Procedures (leave commented out unless using)
+    // rpsSquare();
+    // rpsTest();
+
     // Calibration procedure
-    // calibrate();
-    rpsSquare();
+    calibrate();
 
     // This is where we put the token in
     armServo.SetDegree(30);
+
+    // TODO - Implement final touch here when we prompt
 
     // Sensing the start light, automatically triggering if it takes more than 30 seconds
     int iterationCount = 0;
@@ -138,13 +131,18 @@ int main(void)
     return 0;
 }
 
-// These points are points I went and measured on whatever course is on the closer half towards the consoles
+/**
+ * @brief finalRoutine is the chain of goToPoint (and other misc. function) calls that make up our final competition run.
+ */
 void finalRoutine()
 {
+    // TODO - Figure out if there's any optimizations we can take to have certain goToPoint method calls go faster, or go backwards, or anything like that where you change up the parameters
+
     // Navigating to the token drop
     // 13.4, x, 23.3 Before
     SD.Printf("Going to token.\r\n");
     goToPoint(TOKEN_X, TOKEN_Y, true, TOKEN_HEADING, false, 0.0, false);
+    turnToAngleWhenAlreadyReallyClose(TOKEN_HEADING);
 
     // Dropping the token
     SD.Printf("Depositing token.\r\n");
@@ -158,7 +156,7 @@ void finalRoutine()
 
     // Go on top of the near light
     SD.Printf("Going on top of the near light.\r\n");
-    goToPoint(DDR_BLUE_LIGHT_X - 4.5, DDR_LIGHT_Y, false, 0.0, false, 0.0, false);
+    goToPoint(DDR_BLUE_LIGHT_X - 5.25, DDR_LIGHT_Y, false, 0.0, false, 0.0, false);
 
     // Reading light sensor output
     leftMotor.Stop();
@@ -173,11 +171,13 @@ void finalRoutine()
         LCD.WriteLine("BLUE.");
         SD.Printf("Light was detected as BLUE.\r\n");
 
+        // Positioning above button
         SD.Printf("Pathfinding above the blue light.\r\n");
-        goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y + 5, true, 270, false, 0.0, false); // Positioning above button
+        goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y + 5, true, 270, false, 0.0, false);
 
+        // Hitting button for long enough to get bonus goal too
         SD.Printf("Driving into the blue button.\r\n");
-        goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y - 3, false, 0.0, true, 8.0, false); // Hitting button for long enough to get bonus goal too
+        goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y - 5, false, 0.0, true, 15.0, false);
     }
 
     // Otherwise, the light is red, so do red button pathfinding and press the red button
@@ -187,39 +187,42 @@ void finalRoutine()
         LCD.WriteLine("RED.");
         SD.Printf("Light was detected as RED.\r\n");
 
+        // Positioning above button
         SD.Printf("Pathfinding above the red light.\r\n");
-        goToPoint(DDR_BLUE_LIGHT_X - 4.5, DDR_LIGHT_Y + 5, true, 270, false, 0.0, false); // Positioning above button
+        goToPoint(DDR_BLUE_LIGHT_X - 5.25, DDR_LIGHT_Y + 5, true, 270, false, 0.0, false);
 
+        // Hitting button for long enough to get bonus goal too
         SD.Printf("Driving into the red light.\r\n");
-        goToPoint(DDR_BLUE_LIGHT_X - 4.5, DDR_LIGHT_Y - 3, false, 0.0, true, 8.0, false); // Hitting button for long enough to get bonus goal too
+        goToPoint(DDR_BLUE_LIGHT_X - 5.25, DDR_LIGHT_Y - 5, false, 0.0, true, 15.0, false);
     }
-
-    // Getting a little bit of spacing from DDR before going to the end button
-    SD.Printf("Pathfinding a little bit above DDR so we can go back to the end button.\r\n");
-    goToPoint(DDR_BLUE_LIGHT_X - 2.0, DDR_LIGHT_Y + 3, false, 0.0, false, 0.0, false);
 
     // Space and angle for the RPS button
     SD.Printf("Positioning for the RPS button.\r\n");
-    goToPoint(RPS_BUTTON_X, RPS_BUTTON_Y, true, RPS_BUTTON_HEADING - 15, false, 0.0, false);
+    goToPoint(RPS_BUTTON_X, RPS_BUTTON_Y, true, RPS_BUTTON_HEADING, false, 0.0, false);
+    turnToAngleWhenAlreadyReallyClose(RPS_BUTTON_HEADING);
 
     // Press the RPS button
     SD.Printf("Pressing the RPS button.\r\n");
-    armServo.SetDegree(110); Sleep(4.0);
+
+    // This has to be 115+ for it to sleep enough
+    armServo.SetDegree(115); Sleep(4.0);
     armServo.SetDegree(30);
 
     // Move to bottom of ramp
     SD.Printf("Positioning to move up the ramp\r\n");
-    goToPoint(28, 16.75, false, 0.0, false, 0.0, false);
+    goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y + 2, false, 0.0, false, 0.0, false);
 
     // Move up ramp and stop somewhere near the top
     SD.Printf("Moving up the ramp.\r\n");
-    goToPoint(28, 55, false, 0.0, false, 0.0, false);
+    goToPoint(DDR_BLUE_LIGHT_X + 2, 55, false, 0.0, false, 0.0, false);
 
     // Positioning for the foosball task
     if (!hasExhaustedDeadzone)
     {
         SD.Printf("Deadzone still negated. Positioning for foosball.\r\n");
         goToPoint(FOOSBALL_START_X, FOOSBALL_START_Y, true, 0.0, false, 0.0, false);
+
+        // TODO - Probably implement the more precise turning method here, especially w/ how the modified goToPoint works
     }
 
     else
@@ -227,15 +230,19 @@ void finalRoutine()
         SD.Printf("Deadzone is in effect. Could not position initially for foosball.\r\n");
     }
 
+    // Todo - Figure out the precise angle we need so that it presses down hard enough on foosball to move it, but easily enough that it doesn't lift our vehicle (consider screwing around w/ weight distribution stuff)
+    // Pressing the lever setup on top of foosball  - SetDegree locks it in that place and will return it if forced upward
     SD.Printf("Pressing down on foosball, even if a deadzone is still in effect.\r\n");
-    armServo.SetDegree(110);
+    armServo.SetDegree(95);
     Sleep(.5);
 
-    // After the foosball task
+    // Does the movement involved in foosball (moves straight west)
     if (!hasExhaustedDeadzone)
     {
         SD.Printf("Deadzone still negated. Performing foosball.\r\n");
-        goToPoint(FOOSBALL_END_X, FOOSBALL_END_Y, false, 0.0, false, 0.0, true);
+
+        // Custom-designed method just for foosball that basically uses a x-coord cutoff rather than a hardcoded tolerance check
+        goToPointFoosball();
     }
 
     else
@@ -243,21 +250,17 @@ void finalRoutine()
         SD.Printf("Deadzone is in effect. Could not actually go backwards while doing foosball.\r\n");
     }
 
-    // This should be done regardless of if the deadzone is active or not
-    SD.Printf("Foosball done. Raising arm back up so it doesn't get in the way.\r\n");
+    // Returning the arm back to default position after foosball so it doesn't get in the way
+    SD.Printf("Foosball done. Raising arm back up.\r\n");
     armServo.SetDegree(30);
-    Sleep(1.0);
+    Sleep(.5);
 
     // Going to the left part
     if (!hasExhaustedDeadzone)
-    {
         goToPoint(20, 48, false, 0.0, false, 0.0, false);
-    }
 
     if (!hasExhaustedDeadzone)
-    {
         goToPoint(8, 48, false, 0.0, false, 0.0, false);
-    }
 
     // Position for the lever
     // Todo - Decide if we want to approach head-on or from the side (from the side would probably be more consistent but would require slightly more precise positioning, I guess
@@ -280,6 +283,9 @@ void finalRoutine()
     // If it hits the deadzone, it should skip to here within a few seconds after it gets back to RPS
     SD.Printf("Going to the top of the return ramp.\r\n");
     goToPoint(6, 55.0, false, 0.0, false, 0.0, false);
+
+    SD.Printf("Hitting the end button.\r\n");
+    goToPoint(6.0, 6.0, false, 0.0, false, 0.0, false);
 }
 
 

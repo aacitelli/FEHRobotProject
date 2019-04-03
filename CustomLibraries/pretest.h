@@ -63,7 +63,7 @@ void calibrate()
     Sleep(1.0);
 
     // Foosball width is constant across courses, so we can just apply an offset to the start position to get the end position
-    const float FOOSBALL_HORIZONTAL_DISTANCE = 8;
+    const float FOOSBALL_HORIZONTAL_DISTANCE = 10;
     FOOSBALL_END_X = FOOSBALL_START_X - FOOSBALL_HORIZONTAL_DISTANCE;
 
     // Making the logical assumption that start and end are at the same height (as they need to be for the robot to go 180 degrees backwards, parallel to foosball)
@@ -78,6 +78,7 @@ void calibrate()
     LEVER_HEADING = RPS.Heading();
     SD.Printf("Lever X: %f\r\n", LEVER_X);
     SD.Printf("Lever Y: %f\r\n", LEVER_Y);
+    Sleep(1.0);
 
     // Preparation for next program step
     armServo.SetDegree(30);

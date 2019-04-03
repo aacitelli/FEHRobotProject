@@ -28,19 +28,18 @@ int rpsState()
 // Return value of 0 indicates valid operation, -2 indicates it's in a deadzone 
 int loopUntilValidRPS()
 {
-    while (RPS.X() == -1 || RPS.Y() == -1 || RPS.Heading() == -1 || RPS.X() == -2 || RPS.Y() == -2 || RPS.Heading() == -2)
+    int iterations = 0;
+    while (rpsState() == -1 || rpsState() == -2)
     {
-        SD.Printf("Waiting for valid RPS.\r\n");
-        if (RPS.X() == -1 || RPS.Y() == -1 || RPS.Heading() == -1)
-        {
-            Sleep(.01);
-            continue;
-        }
-
-        else if (RPS.X() == -2 || RPS.Y() == -2 || RPS.Heading() == -2)
+        if (rpsState() == -2)
         {
             return -2;
         }
+
+        iterations++;
+        SD.Printf("Current iterations looping for RPS: %d\r\n", iterations);
+
+        Sleep(.01);
     }
 
     // Getting through that loop and not returning by this point indicates that it now has RPS 
