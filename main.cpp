@@ -79,6 +79,27 @@ void updateLastValidRPSValues();
 void turnSouthAndGoUntilRPS(float startHeading);
 void calibrate();
 
+void foosballToLever()
+{
+    leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .5);
+    rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .4);
+
+    Sleep(3.0);
+
+    leftMotor.Stop();
+    rightMotor.Stop();
+
+    turn(90);
+
+    leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .5);
+    rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .5);
+
+    Sleep(.5);
+
+    leftMotor.Stop();
+    rightMotor.Stop();
+}
+
 /**
  * @brief main is the function that is run at the start of the program. It serves as a hub for most other functions that the program has.
  * @return a value of 0 if everything went right. No other return values currently supported, but theoretically could be in the future.
@@ -243,61 +264,66 @@ void finalRoutine()
         SD.Printf("Deadzone is in effect. Could not position initially for foosball.\r\n");
     }
 
+    // Pressing down on the counters
     armServo.SetDegree(95);
     Sleep(.5); // Giving the servo time to get down
 
-    SD.Printf("Deadzone still negated. Performing foosball.\r\n");
-
-    // goToPointFoosball();
-
     if (!hasExhaustedDeadzone)
     {
+        // Physically pulling the counters over
         leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .4);
         rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .4);
-
         Sleep(1.9);
 
+        // Stopping the motors
         leftMotor.Stop();
         rightMotor.Stop();
 
+        // Lifting the arm off of the counters
         armServo.SetDegree(75);
         Sleep(.5);
 
+        // Moving forward a little bit
         leftMotor.SetPercent(LEFT_MOTOR_PERCENT * .2);
         rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * .2);
-
         Sleep(.75);
 
+        // Stopping the motors
         leftMotor.Stop();
         rightMotor.Stop();
 
+        // Pressing the arm onto the counters again
         armServo.SetDegree(95);
         Sleep(.5);
 
+        // Pulling the counters back again just to be sure
         leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .2);
         rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .2);
-
         Sleep(.75);
 
+        // Stopping the motors
         leftMotor.Stop();
         rightMotor.Stop();
 
+        // Rotating the arm off of the motors
         armServo.SetDegree(30);
         Sleep(.5);
 
-        leftMotor.SetPercent(LEFT_MOTOR_PERCENT * .4);
-        rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * .4);
-
-        Sleep(1.75);
-
+        leftMotor.SetPercent(LEFT_MOTOR_PERCENT * .5);
+        rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * .5);
+        Sleep(1.0);
         leftMotor.Stop();
         rightMotor.Stop();
     }
 
-    else
+    /*
+    // In the case that we try and make the cutback work (Would probably be about a ~5 second time decrease)
+    // Takes it backwards and to the right until approximately to below the lever
+    if (!hasExhaustedDeadzone)
     {
-        SD.Printf("Deadzone is in effect. Could not actually go backwards while doing foosball.\r\n");
+        foosballToLever();
     }
+    */
 
     // Going to the left part
     if (!hasExhaustedDeadzone)
@@ -309,28 +335,26 @@ void finalRoutine()
     // Positioning for the lever
     // Approximate, faster positioning most of the way there
     if (!hasExhaustedDeadzone)
-    {
         goToPoint(LEVER_X + 2, LEVER_Y - 4, false, 0.0, false, 0.0, false, 5);
-    }
 
+    // Positioning for the lever
     // More precise, slower positioning once we're nearly there
     if (!hasExhaustedDeadzone)
-    {
-        SD.Printf("Deadzone still negated. Positioning for lever.\r\n");
         goToPoint(LEVER_X, LEVER_Y, true, LEVER_HEADING, false, 1.5, false, 0);
-    }
 
+    // Turning really precisely to the lever
     if (!hasExhaustedDeadzone)
-    {
         turnToAngleWhenAlreadyReallyClose(LEVER_HEADING);
-    }
 
-    SD.Printf("Pressing lever, even if deadzone is now in effect.\r\n");
+    // Pressing the lever
     armServo.SetDegree(110);
-    Sleep(1.0);
+    Sleep(1.0);    
+
+    // Turning away from the lever enough so that we can turn, then moving the arm up so it doesn't accidentally move the lever down
+    turn(330);
     armServo.SetDegree(30);
 
-    // If it hits the deadzone, it should skip to here within a few seconds after it gets back to RPS
+    // It skips to right here if RPS drops
     SD.Printf("Going to the top of the return ramp.\r\n");
     goToPoint(6, 55.0, false, 0.0, false, 0.0, false, 6);
 
