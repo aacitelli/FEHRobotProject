@@ -47,6 +47,7 @@ void calibrate()
     RPS_BUTTON_X = RPS.X();
     RPS_BUTTON_Y = RPS.Y();
     RPS_BUTTON_HEADING = RPS.Heading();
+    RPS_BUTTON_HEADING -= 4;
     SD.Printf("RPS Button X: %f\r\n", RPS_BUTTON_X);
     SD.Printf("RPS Button Y: %f\r\n", RPS_BUTTON_Y);
     SD.Printf("RPS Button Heading: %f\r\n", RPS_BUTTON_HEADING);

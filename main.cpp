@@ -59,6 +59,15 @@
  *
  * */
 
+/*
+ * Purchase list for Friday:
+ *
+ * - Extra rubber bands
+ * - Extra cds cell (if budget permits)
+ * - Weight distribution fix (probably don't want to do a wrench)
+ *
+ * */
+
 using namespace std;
 
 void init(); void deinit();
@@ -76,8 +85,6 @@ void calibrate();
  */
 int main(void)
 {
-    // foosball();
-
     // Initializes RPS & SD Card
     init();
 
@@ -126,9 +133,12 @@ void finalRoutine()
     SD.Printf("Going to token.\r\n");
 
     // Approximate, Faster Positioning
-    goToPoint(13, 20, false, 0.0, false, 0.0, false, 5);
+    goToPoint(TOKEN_X - 4, TOKEN_Y - 3, false, 0.0, false, 0.0, false, 6);
+
+    // More precise, slower positioning
     goToPoint(TOKEN_X, TOKEN_Y, true, TOKEN_HEADING, false, 0.0, false, 0);
-    Sleep(.2); // Giving goToPoint time to "wind down motors"
+
+    Sleep(.2); // Giving goToPoint time to "wind down motors" in prep for slower turn
     turnToAngleWhenAlreadyReallyClose(TOKEN_HEADING);
 
     // Dropping the token
@@ -139,11 +149,11 @@ void finalRoutine()
 
     // Go to the side of one of the lights
     SD.Printf("Going to the side of one of the lights.\r\n");
-    goToPoint(16, 15, false, 0.0, false, 0.0, false, 5);
+    goToPoint(16, 15, false, 0.0, false, 0.0, false, 6);
 
     // Go on top of the near light
     SD.Printf("Going on top of the near light.\r\n");
-    goToPoint(DDR_BLUE_LIGHT_X - 4.5, DDR_LIGHT_Y, false, 0.0, false, 0.0, false, 1);
+    goToPoint(DDR_BLUE_LIGHT_X - 4.5, DDR_LIGHT_Y, false, 0.0, false, 0.0, false, 2);
 
     // Reading light sensor output
     leftMotor.Stop();
@@ -159,11 +169,12 @@ void finalRoutine()
 
         // Positioning above button
         SD.Printf("Pathfinding above the blue light.\r\n");
-        goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y + 5, true, 270, false, 0.0, false, 1);
+        goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y + 5, true, 270, false, 0.0, false, 3);
+        turnToAngleWhenKindaClose(270);
 
         // Hitting button for long enough to get bonus goal too
         SD.Printf("Driving into the blue button.\r\n");
-        goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y - 5, false, 0.0, true, 21.0, false, 0);
+        goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y - 5, false, 0.0, true, 21.0, false, 1);
     }
 
     // Otherwise, the light is red, so do red button pathfinding and press the red button
@@ -175,16 +186,17 @@ void finalRoutine()
 
         // Positioning above button
         SD.Printf("Pathfinding above the red light.\r\n");
-        goToPoint(DDR_BLUE_LIGHT_X - 4.75, DDR_LIGHT_Y + 5, true, 270, false, 0.0, false, 1);
+        goToPoint(DDR_BLUE_LIGHT_X - 4.75, DDR_LIGHT_Y + 5, true, 270, false, 0.0, false, 3);
+        turnToAngleWhenKindaClose(270);
 
         // Hitting button for long enough to get bonus goal too
         SD.Printf("Driving into the red light.\r\n");
-        goToPoint(DDR_BLUE_LIGHT_X - 4.75, DDR_LIGHT_Y - 5, false, 0.0, true, 21.0, false, 0);
+        goToPoint(DDR_BLUE_LIGHT_X - 4.75, DDR_LIGHT_Y - 5, false, 0.0, true, 21.0, false, 1);
 
         // Getting distance and moving over above blue so it doesn't do weird rotation stuff for the RPS button (this step is unique to red, and is why red takes longer than blue)
         // Angle is so that it turns CCW rather than cw (which tends to hit the blue button)
         // THIS ONE GOES BACKWARDS (~2s faster and theoretically more consistent than old method)
-        goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y + 5, true, 90, false, 0.0, true, 0);
+        goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y + 5, true, 90, false, 0.0, true, 2);
 
     }
 
@@ -207,18 +219,18 @@ void finalRoutine()
 
     // Move to bottom of ramp
     SD.Printf("Positioning to move up the ramp\r\n");
-    goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y + 2, false, 0.0, false, 0.0, false, 4);
+    goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y + 2, false, 0.0, false, 0.0, false, 5);
 
     // Move up ramp and stop somewhere near the top
     // Consistently gets caught on the edge of the ramp but corrects itself (I've never had it fall off the edge irrevocably)
     SD.Printf("Moving up the ramp.\r\n");
-    goToPoint(DDR_BLUE_LIGHT_X + 1.8, 55, false, 0.0, false, 0.0, false, 5);
+    goToPoint(DDR_BLUE_LIGHT_X + 1.8, 57, false, 0.0, false, 0.0, false, 6);
 
     // Positioning for the foosball task
     if (!hasExhaustedDeadzone)
     {
         SD.Printf("Deadzone still negated. Positioning for foosball.\r\n");
-        goToPoint(FOOSBALL_START_X, FOOSBALL_START_Y - .25, true, 7.0, false, 0.0, false, 1);
+        goToPoint(FOOSBALL_START_X, FOOSBALL_START_Y - .25, true, 7.0, false, 0.0, false, 2);
 
         Sleep(.3);
 
@@ -231,23 +243,41 @@ void finalRoutine()
         SD.Printf("Deadzone is in effect. Could not position initially for foosball.\r\n");
     }
 
-    // Todo - Figure out the precise angle we need so that it presses down hard enough on foosball to move it, but easily enough that it doesn't lift our vehicle (consider screwing around w/ weight distribution stuff)
-    // Pressing the lever setup on top of foosball  - SetDegree locks it in that place and will return it if forced upward
-    SD.Printf("Pressing down on foosball, even if a deadzone is still in effect.\r\n");
     armServo.SetDegree(95);
     Sleep(.5); // Giving the servo time to get down
 
-    // Does the movement involved in foosball (moves straight west)
+    SD.Printf("Deadzone still negated. Performing foosball.\r\n");
+
+    // goToPointFoosball();
+
     if (!hasExhaustedDeadzone)
     {
-        SD.Printf("Deadzone still negated. Performing foosball.\r\n");
+        leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .4);
+        rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .4);
 
-        // goToPointFoosball();
+        Sleep(1.9);
 
-        leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .35);
-        rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .35);
+        leftMotor.Stop();
+        rightMotor.Stop();
 
-        Sleep(2.2);
+        armServo.SetDegree(75);
+        Sleep(.5);
+
+        leftMotor.SetPercent(LEFT_MOTOR_PERCENT * .2);
+        rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * .2);
+
+        Sleep(.75);
+
+        leftMotor.Stop();
+        rightMotor.Stop();
+
+        armServo.SetDegree(95);
+        Sleep(.5);
+
+        leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .2);
+        rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .2);
+
+        Sleep(.75);
 
         leftMotor.Stop();
         rightMotor.Stop();
@@ -271,16 +301,16 @@ void finalRoutine()
 
     // Going to the left part
     if (!hasExhaustedDeadzone)
-        goToPoint(20, 48, false, 0.0, false, 0.0, false, 5);
+        goToPoint(20, 48, false, 0.0, false, 0.0, false, 6);
 
     if (!hasExhaustedDeadzone)
-        goToPoint(8, 48, false, 0.0, false, 0.0, false, 5);
+        goToPoint(8, 48, false, 0.0, false, 0.0, false, 6);
 
     // Positioning for the lever
     // Approximate, faster positioning most of the way there
     if (!hasExhaustedDeadzone)
     {
-        goToPoint(LEVER_X + 2, LEVER_Y - 6, false, 0.0, false, 0.0, false, 5);
+        goToPoint(LEVER_X + 2, LEVER_Y - 4, false, 0.0, false, 0.0, false, 5);
     }
 
     // More precise, slower positioning once we're nearly there
@@ -302,10 +332,10 @@ void finalRoutine()
 
     // If it hits the deadzone, it should skip to here within a few seconds after it gets back to RPS
     SD.Printf("Going to the top of the return ramp.\r\n");
-    goToPoint(6, 55.0, false, 0.0, false, 0.0, false, 5);
+    goToPoint(6, 55.0, false, 0.0, false, 0.0, false, 6);
 
     SD.Printf("Hitting the end button.\r\n");
-    goToPoint(5.0, 5.0, false, 0.0, false, 0.0, false, 5);
+    goToPoint(5.0, 5.0, false, 0.0, false, 0.0, false, 6);
 }
 
 

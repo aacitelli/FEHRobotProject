@@ -647,6 +647,69 @@ void turn (float endHeading)
     SD.Printf("///////////////////////////////\r\n");
 }
 
+void turnToAngleWhenKindaClose(float endHeading)
+{
+    // This function itself is naturally blocking; The return value is only relevant if it's in a deadzone
+    if (loopUntilValidRPS() == -2)
+    {
+        SD.Printf("goToPoint: Deadzone has become enabled again.\r\n");
+
+        // Causes the program to skip certain goToPoint calls
+        hasExhaustedDeadzone = true;
+
+        // Does what you think it does
+        SD.Printf("goToPoint: Turning roughly south and going until RPS.\r\n");
+        getBackToRPSFromDeadzone();
+
+        // Escapes this call of goToPoint because it doesn't really have RPS any more
+        return;
+    }
+
+    while (smallestDistanceBetweenHeadings(RPS.Heading(), endHeading) > 5)
+    {
+        if (shouldTurnLeft(RPS.Heading(), endHeading))
+        {
+            leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .2);
+            rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * .2);
+        }
+
+        else
+        {
+            leftMotor.SetPercent(LEFT_MOTOR_PERCENT * .2);
+            rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .2);
+        }
+
+        // .125 results in too much overshooting, .05 never overshoots. This is hopefully a happy medium that usually gets it first try but may need one or two extra passes.
+        Sleep(.15);
+        leftMotor.Stop();
+        rightMotor.Stop();
+
+        Sleep(.34);
+
+        // This function itself is naturally blocking; The return value is only relevant if it's in a deadzone
+        if (loopUntilValidRPS() == -2)
+        {
+            SD.Printf("goToPoint: Deadzone has become enabled again.\r\n");
+
+            // Causes the program to skip certain goToPoint calls
+            hasExhaustedDeadzone = true;
+
+            // Does what you think it does
+            SD.Printf("goToPoint: Turning roughly south and going until RPS.\r\n");
+            getBackToRPSFromDeadzone();
+
+            // Escapes this call of goToPoint because it doesn't really have RPS any more
+            return;
+        }
+    }
+
+    SD.Printf("///////////////////////////////\r\n");
+    SD.Printf("accurateTurn: FUNCTION SYNOPSIS: \r\n");
+    SD.Printf("accurateTurn: Intended Heading: %f\r\n", endHeading);
+    SD.Printf("accurateTurn: Actual Heading @ End: %f\r\n", RPS.Heading());
+    SD.Printf("///////////////////////////////\r\n");
+}
+
 void turnToAngleWhenAlreadyReallyClose(float endHeading)
 {
     // This function itself is naturally blocking; The return value is only relevant if it's in a deadzone
