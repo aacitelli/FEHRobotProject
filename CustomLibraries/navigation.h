@@ -293,7 +293,7 @@ void goToPoint(float endX, float endY, bool shouldTurnToEndHeading, float endHea
                 }
 
                 // Long distance, fast speed
-                else if (getDistance(RPS.X(), RPS.Y(), endX, endY) > 3)
+                else if (getDistance(RPS.X(), RPS.Y(), endX, endY) > 4)
                 {                    
                     SD.Printf("goToPoint: Robot is in line with desired angle, and is 4+ inches away. Going straight at full speed.\r\n");
 
@@ -351,7 +351,7 @@ void goToPoint(float endX, float endY, bool shouldTurnToEndHeading, float endHea
             else
             {
                 // Medium distance, medium speed
-                if (getDistance(RPS.X(), RPS.Y(), endX, endY) > 3)
+                if (getDistance(RPS.X(), RPS.Y(), endX, endY) > 4)
                 {
                     SD.Printf("goToPoint: Robot is in line with desired angle, and is 2.5-4 inches away. Going straight at slightly decreased speed.\r\n");
 
@@ -584,8 +584,8 @@ void turn (float endHeading)
             {
                 SD.Printf("turn: Robot is more than 60 degrees away from endHeading. Turning really fast.\r\n");
 
-                leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .5);
-                currentLeftMotorPercent = -LEFT_MOTOR_PERCENT * .5;
+                leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .4);
+                currentLeftMotorPercent = -LEFT_MOTOR_PERCENT * .4;
 
                 rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * .5);
                 currentRightMotorPercent = RIGHT_MOTOR_PERCENT * .5;
@@ -608,11 +608,11 @@ void turn (float endHeading)
             {
                 SD.Printf("turn: Robot is less than 30 degrees away from endHeading. Turning more slowly.\r\n");
 
-                leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .25);
-                currentLeftMotorPercent = -LEFT_MOTOR_PERCENT * .25;
+                leftMotor.SetPercent(-LEFT_MOTOR_PERCENT * .2);
+                currentLeftMotorPercent = -LEFT_MOTOR_PERCENT * .2;
 
-                rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * .25);
-                currentRightMotorPercent = RIGHT_MOTOR_PERCENT * .25;
+                rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * .2);
+                currentRightMotorPercent = RIGHT_MOTOR_PERCENT * .2;
             }
         }
 
@@ -650,11 +650,11 @@ void turn (float endHeading)
             {
                 SD.Printf("turn: Robot is less than 30 degrees away from endHeading. Turning more slowly.\r\n");
 
-                leftMotor.SetPercent(LEFT_MOTOR_PERCENT * .25);
-                currentLeftMotorPercent = LEFT_MOTOR_PERCENT * .25;
+                leftMotor.SetPercent(LEFT_MOTOR_PERCENT * .2);
+                currentLeftMotorPercent = LEFT_MOTOR_PERCENT * .2;
 
-                rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .25);
-                currentRightMotorPercent = -RIGHT_MOTOR_PERCENT * .25;
+                rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .2);
+                currentRightMotorPercent = -RIGHT_MOTOR_PERCENT * .2;
             }
         }
 
@@ -697,7 +697,22 @@ void turn (float endHeading)
 
 void turnToAngleWhenAlreadyReallyClose(float endHeading)
 {
-    loopUntilValidRPS();
+    // This function itself is naturally blocking; The return value is only relevant if it's in a deadzone
+    if (loopUntilValidRPS() == -2)
+    {
+        SD.Printf("goToPoint: Deadzone has become enabled again.\r\n");
+
+        // Causes the program to skip certain goToPoint calls
+        hasExhaustedDeadzone = true;
+
+        // Does what you think it does
+        SD.Printf("goToPoint: Turning roughly south and going until RPS.\r\n");
+        getBackToRPSFromDeadzone();
+
+        // Escapes this call of goToPoint because it doesn't really have RPS any more
+        return;
+    }
+
     while (smallestDistanceBetweenHeadings(RPS.Heading(), endHeading) > 1.5)
     {
         if (shouldTurnLeft(RPS.Heading(), endHeading))
@@ -718,10 +733,22 @@ void turnToAngleWhenAlreadyReallyClose(float endHeading)
 
         Sleep(.35);
 
-        loopUntilValidRPS();
-    }
+        // This function itself is naturally blocking; The return value is only relevant if it's in a deadzone
+        if (loopUntilValidRPS() == -2)
+        {
+            SD.Printf("goToPoint: Deadzone has become enabled again.\r\n");
 
-    Sleep(.5);
+            // Causes the program to skip certain goToPoint calls
+            hasExhaustedDeadzone = true;
+
+            // Does what you think it does
+            SD.Printf("goToPoint: Turning roughly south and going until RPS.\r\n");
+            getBackToRPSFromDeadzone();
+
+            // Escapes this call of goToPoint because it doesn't really have RPS any more
+            return;
+        }
+    }
 
     SD.Printf("///////////////////////////////\r\n");
     SD.Printf("accurateTurn: FUNCTION SYNOPSIS: \r\n");

@@ -128,6 +128,7 @@ void finalRoutine()
     // Approximate, Faster Positioning
     goToPoint(13, 20, false, 0.0, false, 0.0, false, true);
     goToPoint(TOKEN_X, TOKEN_Y, true, TOKEN_HEADING, false, 0.0, false, false);
+    Sleep(.3);
     turnToAngleWhenAlreadyReallyClose(TOKEN_HEADING);
 
     // Dropping the token
@@ -163,7 +164,7 @@ void finalRoutine()
 
         // Hitting button for long enough to get bonus goal too
         SD.Printf("Driving into the blue button.\r\n");
-        goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y - 5, false, 0.0, true, 18.0, false, false);
+        goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y - 5, false, 0.0, true, 21.0, false, false);
     }
 
     // Otherwise, the light is red, so do red button pathfinding and press the red button
@@ -179,12 +180,18 @@ void finalRoutine()
 
         // Hitting button for long enough to get bonus goal too
         SD.Printf("Driving into the red light.\r\n");
-        goToPoint(DDR_BLUE_LIGHT_X - 4.75, DDR_LIGHT_Y - 5, false, 0.0, true, 18.0, false, false);
+        goToPoint(DDR_BLUE_LIGHT_X - 4.75, DDR_LIGHT_Y - 5, false, 0.0, true, 21.0, false, false);
+
+        // Getting distance and moving over above blue so it doesn't do weird rotation stuff for the RPS button (this step is unique to red, and is why red takes longer than blue)
+        // Angle is so that it turns CCW rather than cw (which tends to hit the blue button)
+        goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y + 5, true, 90, false, 0.0, false, false);
+
     }
 
     // Space and angle for the RPS button
     SD.Printf("Positioning for the RPS button.\r\n");
     goToPoint(RPS_BUTTON_X, RPS_BUTTON_Y, true, RPS_BUTTON_HEADING, false, 0.0, false, false);
+    Sleep(.3);
     turnToAngleWhenAlreadyReallyClose(RPS_BUTTON_HEADING);
 
     // Press the RPS button
@@ -207,10 +214,12 @@ void finalRoutine()
     if (!hasExhaustedDeadzone)
     {
         SD.Printf("Deadzone still negated. Positioning for foosball.\r\n");
-        goToPoint(FOOSBALL_START_X, FOOSBALL_START_Y, true, 8.0, false, 0.0, false, false);
+        goToPoint(FOOSBALL_START_X, FOOSBALL_START_Y - .25, true, 7.0, false, 0.0, false, false);
+
+        Sleep(.3);
 
         // We want foosball to start out as accurately as possible, basically
-        turnToAngleWhenAlreadyReallyClose(8);
+        turnToAngleWhenAlreadyReallyClose(7);
     }
 
     else
@@ -285,7 +294,7 @@ void finalRoutine()
 
     SD.Printf("Pressing lever, even if deadzone is now in effect.\r\n");
     armServo.SetDegree(110);
-    Sleep(.5);
+    Sleep(1.0);
     armServo.SetDegree(30);
 
     // If it hits the deadzone, it should skip to here within a few seconds after it gets back to RPS
