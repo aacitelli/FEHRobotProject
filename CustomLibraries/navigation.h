@@ -45,6 +45,8 @@ using namespace std;
  * 3 = .3 Speed Bump (Up to .5)
  * 4 = .4 Speed Bump (Up to .6)
  * 5 = .5 Speed Bump (Up to .7)
+ *
+ * Theoretically goes up to 8, but the highest we ever use is .5 or .6 for "full" speed
  */
 void goToPoint(float endX, float endY, bool shouldTurnToEndHeading, float endHeading, bool isTimed, float time, bool shouldGoBackwards, int mode)
 {
@@ -438,19 +440,16 @@ void goToPoint(float endX, float endY, bool shouldTurnToEndHeading, float endHea
 // Todo - Test this (If this already works correctly, it'll be a literal miracle )
 void getBackToRPSFromDeadzone()
 {
-    // Todo - Set up two different paths (to the left of dodecahedron, and to the right) for the robot to go 
+    // This should automatically be called regardless but setting it here too just incase
+    hasExhaustedDeadzone = true;
 
-    // If it's definitely to the left or the right of the dodecahedron (meaning we can go straight down in either case) 
-    // Todo - Use rpsTest to figure out the actual values for these, then give it like 3 inches of leeway on each side - These are educated guesses rn 
-    // (This isn't worth adding calibration for unless we're consistently having issues with it.
-    // In a perfect run, none of these deadzone failsafes even trigger, but they're here in the case that they need to do something 
+    // If the dodecahedron isn't below it, just go straight south (the majority of cases)
     if (lastValidX < 7 || lastValidX > 24)
     {
         turnNoRPS(lastValidHeading, 270);
     }
 
     // If it's somewhere generally above the dodecahedron (meaning we should go east for a bit then go straight down)
-    // Todo - Make the amount we go to the side scale with how close we were to the dodecahedron's center x-coordinate 
     else 
     {
         // Turning as close to east as we can get
@@ -459,7 +458,6 @@ void getBackToRPSFromDeadzone()
         // Going that way for about a second 
         leftMotor.SetPercent(LEFT_MOTOR_PERCENT * .5);
         currentLeftMotorPercent = LEFT_MOTOR_PERCENT * .5;
-
         rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * .5);
         currentRightMotorPercent = RIGHT_MOTOR_PERCENT * .5;
 
@@ -468,26 +466,24 @@ void getBackToRPSFromDeadzone()
         // Stopping the motors
         leftMotor.Stop();
         currentLeftMotorPercent = 0;
-
         rightMotor.Stop();
         currentRightMotorPercent = 0;
 
         // Turning as close to south as we can get 
-        // Makes the assumption that we're currently faced towards zero degrees
+        // Makes the assumption that we're currently faced towards zero degrees (we can deal with ~10 degrees of inaccuracy here - Just needs to make it back to RPS)
         turnNoRPS(0, 270);
     }
 
     // Drives until we get RPS back (used for all escape cases)
     leftMotor.SetPercent(LEFT_MOTOR_PERCENT * .4);
     currentLeftMotorPercent = LEFT_MOTOR_PERCENT * .4;
-
     rightMotor.SetPercent(RIGHT_MOTOR_PERCENT * .4);
     currentRightMotorPercent = RIGHT_MOTOR_PERCENT * .4;
 
     while (RPS.X() == -1 || RPS.X() == -2) { Sleep(.01); }
 
-    // Waits another second once we get RPS to make sure we're firmly in RPS territory
-    Sleep(1.0);
+    // Waits another half a second once we get RPS to make sure we're firmly in RPS territory
+    Sleep(.5);
 
     leftMotor.Stop();
     currentLeftMotorPercent = 0;
@@ -528,11 +524,8 @@ void turn (float endHeading)
         LCD.Write("Current Heading: "); LCD.WriteLine(RPS.Heading());
         LCD.Write("Intended Heading: "); LCD.WriteLine(endHeading);
 
-        // * At this point, RPS values are always valid and completely up to date due to the update at the end of the tolerance loop 
-        // Because RPS is guaranteed to be valid right now, update the RPS cache 
+        // RPS is always valid at this point due to the loopUntilValidRPS call at the end of the loop
         updateLastValidRPSValues();
-
-        loopUntilValidRPS();
 
         // Debug 
         SD.Printf("turn: Given currentHeading = %f and endHeading = %f, going through another iteration of the tolerance loop.\r\n", RPS.Heading(), endHeading);
