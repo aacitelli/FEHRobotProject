@@ -72,6 +72,18 @@
  *
  */
 
+/* Lighting Check Necessary Values:
+ *
+ * - Ambient Start Light Value (Light not on)
+ * - Start Light Value
+ * - DDR Red Light Value
+ * - DDR Blue Light Value
+ *
+ * Take DDR "split" value to be halfway point between the two DDR colors
+ * Take start light "split" value to be halfway point between start light normal and ambient colors, but a little closer to the start light value to be sure
+ *
+ * */
+
 using namespace std;
 
 void init(); void deinit();
@@ -83,10 +95,6 @@ void updateLastValidRPSValues();
 void turnSouthAndGoUntilRPS(float startHeading);
 void calibrate();
 
-/**
- * @brief main is the function that is run at the start of the program. It serves as a hub for most other functions that the program has.
- * @return a value of 0 if everything went right. No other return values currently supported, but theoretically could be in the future.
- */
 int main(void)
 {
     // Initializes RPS & SD Card
@@ -102,9 +110,13 @@ int main(void)
     // This is where we put the token in
     armServo.SetDegree(30);
 
+    // This is our "final action"
+    LCD.WriteLine("Waiting for final touch.");
+    loopUntilTouch();
+
     // Sensing the start light, automatically triggering if it takes more than 30 seconds
     int iterationCount = 0;
-    while (lightSensor.Value() > .45 && iterationCount < 300)
+    while (lightSensor.Value() > .75 && iterationCount < 300)
     {
         iterationCount++;
 
@@ -144,15 +156,22 @@ void finalRoutine()
     turnToAngleWhenAlreadyReallyClose(TOKEN_HEADING);
 
     // Dropping the token
-    armServo.SetDegree(120);
-    Sleep(1.0);
+    float currentDegree = 30;
+    while (currentDegree <= 115)
+    {
+        armServo.SetDegree(currentDegree);
+        currentDegree++;
+        Sleep(.0075);
+    }
+    Sleep(.5);
     armServo.SetDegree(30);
+    Sleep(.5);
 
     // Go to the side of one of the lights so that we can correctly align onto the close button
     goToPoint(16, 15, false, 0.0, false, 0.0, false, 6);
 
     // Go on top of the near light
-    goToPoint(DDR_BLUE_LIGHT_X - 4.5, DDR_LIGHT_Y, false, 0.0, false, 0.0, false, 2);
+    goToPoint(DDR_BLUE_LIGHT_X - 4.25, DDR_LIGHT_Y, false, 0.0, false, 0.0, false, 2);
 
     // Reading light sensor output
     leftMotor.Stop();
@@ -160,33 +179,38 @@ void finalRoutine()
     SD.Printf("Light Sensor Output: %f\r\n", lightSensor.Value());
 
     // If the light is blue, do this pathfinding and press the blue button
-    if (lightSensor.Value() > .5)
+    if (lightSensor.Value() > 1.0)
     {
         // Positioning approximately above the blue button
         goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y + 5, true, 270, false, 0.0, false, 3);
+
+        // Give first tolerance check in next function time to catch up (had minor issues w/ this otherwise, so this is here as insurance)
+        Sleep(.4);
 
         // Was having consistency issues with being straight enough, so this one should reduce the angle we're currently at from like += 10 degrees to += 5
         turnToAngleWhenKindaClose(270);
 
         // Driving down into the blue button
-        goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y - 5, false, 0.0, true, 23.0, false, 1);
+        goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y - 5, false, 0.0, true, 22.0, false, 1);
     }
 
     // Otherwise, the light is red, so do red button pathfinding and press the red button
     else
     {
         // Positioning above button
-        goToPoint(DDR_BLUE_LIGHT_X - 4.75, DDR_LIGHT_Y + 5, true, 270, false, 0.0, false, 3);
+        goToPoint(DDR_BLUE_LIGHT_X - 4.25, DDR_LIGHT_Y + 5, true, 270, false, 0.0, false, 3);
+
+        // See above note
+        Sleep(.4);
 
         // Was having consistency issues with being straight enough, so this one should reduce the angle we're currently at from like += 10 degrees to += 5
         turnToAngleWhenKindaClose(270);
 
         // Hitting button for long enough to get bonus goal too
-        goToPoint(DDR_BLUE_LIGHT_X - 4.75, DDR_LIGHT_Y - 5, false, 0.0, true, 23.0, false, 1);
+        goToPoint(DDR_BLUE_LIGHT_X - 4.25, DDR_LIGHT_Y - 5, false, 0.0, true, 22.0, false, 1);
 
         // In the case of red, we have to back up a little bit so that we don't turn into the blue button when aligning for the RPS button
         goToPoint(DDR_BLUE_LIGHT_X, DDR_LIGHT_Y + 5, true, 90, false, 0.0, true, 2);
-
     }
 
     // Space and angle for the RPS button
@@ -313,29 +337,43 @@ void finalRoutine()
     // Positioning for the lever
     // Approximate, faster positioning most of the way there
     if (!hasExhaustedDeadzone)
-        goToPoint(LEVER_X + 2, LEVER_Y - 4, false, 0.0, false, 0.0, false, 5);
+        goToPoint(LEVER_X + 1, LEVER_Y - 4, false, 0.0, false, 0.0, false, 5);
 
     // Positioning for the lever
     // More precise, slower positioning once we're nearly there
     if (!hasExhaustedDeadzone)
         goToPoint(LEVER_X, LEVER_Y, true, LEVER_HEADING, false, 1.5, false, 0);
 
+    // Making sure tolerance check in next called function is very accurate
+    Sleep(.4);
+
     // Turning really precisely to the lever
     if (!hasExhaustedDeadzone)
         turnToAngleWhenAlreadyReallyClose(LEVER_HEADING);
 
     // Pressing the lever
-    armServo.SetDegree(110);
+    armServo.SetDegree(105);
     Sleep(1.0);
+
+    leftMotor.SetPercent(LEFT_MOTOR_PERCENT * .4);
+    rightMotor.SetPercent(-RIGHT_MOTOR_PERCENT * .4);
+    Sleep(.2);
     armServo.SetDegree(30);
 
-    /* It skips to right here if RPS drops */
+    Sleep(.5);
 
-    // Go to the top of the relevant ramp (approx.)
+    leftMotor.Stop();
+    rightMotor.Stop();
+
+    // turnNoRPS(RPS.Heading(), fmod(RPS.Heading() + 45, 360));
+
+
+    /* It skips to right here if RPS drops */
+    // Approximately centered somewhere in front of the ramp
     goToPoint(6, 55.0, false, 0.0, false, 0.0, false, 6);
 
-    // Running into the end button
-    goToPoint(5.0, 5.0, false, 0.0, false, 0.0, false, 6);
+    // Approximately the end button
+    goToPoint(5.5, 5.0, false, 0.0, false, 0.0, false, 6);
 }
 
 

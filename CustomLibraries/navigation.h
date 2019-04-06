@@ -50,6 +50,10 @@ using namespace std;
  */
 void goToPoint(float endX, float endY, bool shouldTurnToEndHeading, float endHeading, bool isTimed, float time, bool shouldGoBackwards, int mode)
 {
+    // If calibration really dropped the ball on this coordinate, skip it, basically
+    if (endX == -1 && endY == -1)
+        return;
+
     SD.Printf("----------------------------------\r\n");
     SD.Printf("goToPoint: Entered goToPoint.\r\n");
     SD.Printf("goToPoint: goToPoint Passed-In Parameters: \r\n");
