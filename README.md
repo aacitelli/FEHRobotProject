@@ -10,13 +10,13 @@ Each team, made of 4 people, was to conceive, design, build, and program a small
 
 ### Team Members' Roles
 
-Anden - Did ~95% of the code, with Jason helping out with one of the performance tests and some very early code. Did almost all of the testing. Was largely responsible for making sure the robot performed well on-course during performance tests and the competition itself. 
+Anden - Wrote the code, with Jason helping out with one of the performance tests and some very early code. Did all the testing. Was responsible for making sure the robot performed well on-course during performance tests and the competition itself. 
 
-Jason - Jason built most of the robot itself and fixed most of the mechanical or construction issues we had. Occasionally helped with the code. Worked some on documentation, report-writing, and the website. 
+Jason - Built most of the robot itself and fixed most of the mechanical or construction issues we had. Occasionally helped with the code and with debugging. Worked some on documentation, report-writing, and the website. 
 
-Joe - Joe worked heavily on documentation, report-writing, and the website. 
+Joe - Worked heavily on documentation, report-writing, and the website, alongside helping often with testing. 
 
-Keely - Keely also worked heavily on documentation, report-writing, and the website. She also did the CAD models for the robot. 
+Keely - Worked heavily on documentation, report-writing, and the website. Did the CAD models for the robot. 
 
 ## Technical Specifications 
 
