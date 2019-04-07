@@ -1,28 +1,27 @@
 #ifndef CUSTOMNAVIGATION_H
 #define CUSTOMNAVIGATION_H
 
-// Requisite Libraries
-// Custom Libraries
-// Todo - Trim these down to what we actually need
-
+// FEH Libraries
 #include <FEHLCD.h>
 #include <FEHSD.h>
 #include <FEHRPS.h>
 
+// Custom Libraries
 #include "rps.h"
 #include "utility.h"
 
 void getBackToRPSFromDeadzone();
 void turn(float endHeading);
 void turn(float endX, float endY);
-
 void turnNoRPS(float currentHeading, float endHeading);
 
+// Removes need to prefix lots of function calls with std
 using namespace std;
 
 #define GOTOPOINT_COUNTS_PER_SECOND 10
 
-/**
+/*
+ *
  * Oh boy, is this a fun method...
  *
  * @brief goToPoint, long story short, takes in an (x, y) coordinate and makes its way there, intelligently autocorrecting so that it automatically gets to within a very small tolerance of that point.
@@ -36,17 +35,8 @@ using namespace std;
  * @param mode is an integer set to 0 for "Slow", 1 for "Medium" and 2 for "Fast" speeds. Generally, we use 0 for fine positioning and
  * 2 for "Just get there fast and don't worry too much about precision", but 1 has intermediate uses.
  *
- * This is the fun method. Have fun. I lost my sanity several times over trying to build a lot of this proportional stuff in.
+ * This is the fun method. Have fun. I lost my sanity several times over trying to build a lot of this proportional stuff in, but it turned out pretty well in the end.
  *
- * "Scaling" Modes
- * 0 = Go as slow as possible (.2 forward, slow otherwise)
- * 1 = .1 Speed Bump (Up to .3)
- * 2 = .2 Speed Bump (Up to .4)
- * 3 = .3 Speed Bump (Up to .5)
- * 4 = .4 Speed Bump (Up to .6)
- * 5 = .5 Speed Bump (Up to .7)
- *
- * Theoretically goes up to 8, but the highest we ever use is .5 or .6 for "full" speed
  */
 void goToPoint(float endX, float endY, bool shouldTurnToEndHeading, float endHeading, bool isTimed, float time, bool shouldGoBackwards, int mode)
 {
@@ -439,9 +429,6 @@ void goToPoint(float endX, float endY, bool shouldTurnToEndHeading, float endHea
     SD.Printf("///////////////////////////////\r\n");
 }
 
-// Todo - Split the deadzone into small sectors, each of which has its own pathfinding to get back to RPS w/o hitting the dodecahedron 
-// Todo (contd.) - The code keeps track of the last valid RPS values, so use that X, Y, and Heading to get back to south
-// Todo - Test this (If this already works correctly, it'll be a literal miracle )
 void getBackToRPSFromDeadzone()
 {
     // This should automatically be called regardless but setting it here too just incase

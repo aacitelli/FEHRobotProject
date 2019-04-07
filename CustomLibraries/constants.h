@@ -39,13 +39,14 @@ const float EAST = 0;
 const float SOUTH = 270;
 const float WEST = 180;
 
-// Values kept to allow the robot to semi-intelligently get back 
-// to RPS when deadzone hits and the robot is still in it
-// Todo - Update these two variables, because I have no idea what motor speed (maybe 40?) I was at when I initially calculated these
-// Current variable values mean it went 690 Degrees in 5 seconds, just for reference 
+// Hardcoded tuning values for use with RPS deadzone mitigation
 const float DEGREES_PER_SECOND = (1080 / 10.0);
 const float SECONDS_PER_DEGREE = (10.0 / 1080);
+
+// Global boolean that lets us conditionally skip RPS-dependent functions when in effective deadzone
 bool hasExhaustedDeadzone = false;
+
+// Basically cached RPS values that allow the robot to semi-intelligently get back to RPS from deadzone
 float lastValidX, lastValidY, lastValidHeading;
 
 // Used to account for differences between RPS coordinates and where our robot turns around (the centroid) 

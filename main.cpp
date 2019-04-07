@@ -9,80 +9,11 @@
 #include <ctime>
 
 // Custom Libraries
-// Todo - Trim these down to what we actually need
 #include "CustomLibraries/constants.h"
 #include "CustomLibraries/posttest.h"
 #include "CustomLibraries/pretest.h"
 #include "CustomLibraries/navigation.h"
 #include "CustomLibraries/testing.h"
-
-/* NEXT WEEK'S TODO LIST
- *
- * HARDWARE (Loosely prioritized)
- *
- * - Make any aesthetic changes we want to (I'm 100% fine with going past $120 if it's for this. We gotta swank our robot out)
- * - Re-affix the QR code - Implement several points of failure (Tape, Screw, Rubber Cement / Loctite)
- *      - Reminds me - Make sure everything attached to the robot is securely attached (I'm looking at you, Proteus, though we have to make sure the whole thing is good)
- * - Do documentation (/** or JavaDoc) for every function in here
- *
- * */
-
-/* Possible Timesaves (in approximate order of how "safe" or easy to implement they are):
- *
- * - Tweak turn() motor amounts to be faster (sacrificing a little bit of precision for speed - I think it's worth it, and I'll probably end up implementing this)
- *      - "Too much" is whenever it overshoots the end tolerance for long enough that the slower turn would overpass it
- *      - "Too ligtle" is whenever it hits it consistently every time but could still be faster while achieving the same result
- * - Raise the turn() angle tolerance because it's always run as part of goToPoint and that'll autocorrect for small inaccuracies while being faster overall
- * - Raise goToPoing passed-in speeds on segments that are consistent - Can shave probably a second off of a lot of these
- *      - This just means modifying the constants in the goToPoint calls - Not a hard fix, but could cause instability and unreliability 
- * - If we end up making goToPoint slower when closer, tweak that downshift to be later on in the timing (closer to the end point) so it gets slow as late as possible while still being precise enough
- *      - Basically, keep the current system, but if the tolerance is greater, go on average a lot faster through the entire procedure
- *
- * Today's Ideas:
- *
- * - Implement a "should go faster" parameter to goToPoint that'll basically go twice the speed and take twice the usual tolerance
- * - Implement proportional speeds into goToPoint
- *
- * */
-
-/* Friday's Todo (Ordered)
- *
- * - Replace wrench if at all possible
- * - Make sure consistency is alright
- *      - Test RPS alignment, see if we need to consistently angle offset differently than we already do
- * - See if there's any good alternative to hitting the lever the way we currently do
- * - Add a checkpoint near the top of the map so that it goes up the middle of the ramp and doesn't get really close to the side like it currently does
- * - Go backwards to the lever around the top instead of the bottom (Probably ~5s quicker)
- *
- * */
-
-/*
- * Purchase list for Friday:
- *
- * - Extra rubber bands
- * - Extra cds cell (if budget permits)
- * - Weight distribution fix (probably don't want to do a wrench)
- *
- * */
-
-/*
- * Competition Todo:
- *
- * Get code ready for lighting checks and figure out what we need to measure
- *
- */
-
-/* Lighting Check Necessary Values:
- *
- * - Ambient Start Light Value (Light not on)
- * - Start Light Value
- * - DDR Red Light Value
- * - DDR Blue Light Value
- *
- * Take DDR "split" value to be halfway point between the two DDR colors
- * Take start light "split" value to be halfway point between start light normal and ambient colors, but a little closer to the start light value to be sure
- *
- * */
 
 using namespace std;
 
@@ -99,10 +30,6 @@ int main(void)
 {
     // Initializes RPS & SD Card
     init();
-
-    // Testing Procedures (leave commented out unless using)
-    // rpsSquare();
-    // rpsTest();
 
     // Calibration procedure
     calibrate();
@@ -304,29 +231,6 @@ void finalRoutine()
         rightMotor.Stop();
     }
 
-    // TODO - Make it use goToPoint backwards to go around the top of the dodecahedron
-    /* Tenative outline for what that might look like (probably better to actually go and get test RPS values for this):
-    // Go above the dodecahedron
-    // TODO - Add hasExhaustedDeadzone checks to these
-    // TODO - Go measure the RPS there and just use goToPoint to go to like 3 different points around the edge so it's a moderately smooth turn
-    goToPoint(FOOSBALL_START_X - 14, FOOSBALL_START_Y - 2, false, 0.0, false, 0.0, true, 4);
-
-    // Go below the lever kinda
-    goToPoint(FOOSBALL_START_X - 18, FOOSBALL_START_Y - 6, false, 0.0, false, 0.0, true, 4);
-
-    // Go below the lever all the way and approximately realign
-    goToPoint(FOOSBALL_START_X - 22, FOOSBALL_START_Y - 8, false, 0.0, false, 0.0, true, 4);
-
-    // Positioning for the lever
-    // More precise, slower positioning once we're nearly there
-    if (!hasExhaustedDeadzone)
-        goToPoint(LEVER_X, LEVER_Y, true, LEVER_HEADING, false, 1.5, false, 0);
-
-    // Turning really precisely to the lever
-    if (!hasExhaustedDeadzone)
-        turnToAngleWhenAlreadyReallyClose(LEVER_HEADING);
-    */
-
     // Going to the left part
     if (!hasExhaustedDeadzone)
         goToPoint(20, 48, false, 0.0, false, 0.0, false, 6);
@@ -364,9 +268,6 @@ void finalRoutine()
 
     leftMotor.Stop();
     rightMotor.Stop();
-
-    // turnNoRPS(RPS.Heading(), fmod(RPS.Heading() + 45, 360));
-
 
     /* It skips to right here if RPS drops */
     // Approximately centered somewhere in front of the ramp
