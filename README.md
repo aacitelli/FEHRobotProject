@@ -2,7 +2,10 @@
 
 This is the codebase for a 3-month-long project completed as part of ENGR 1281.02H (Fundamentals of Engineering for Honors II - Robotics), a project class in Ohio State's College of Engineering Honors Program. Videos and pictures of the project as well as more extensive documentation can be found on our team's official website, located at <URL>. 
 
-Overall, the robot performed very well, placing at <insert placings after competition>. 
+Overall, the robot performed very well, able to complete a perfect run the majority of the time. Occasional consistency issues accounted for the rest of the time, where we would usually get 80-90% of the points. 
+
+Given a more exhaustive seeding process, our robot would likely be around 15th out of 66 teams. Unfortunately, we were seeded poorly in the bracket due to our robot not quite being ready for individual competition the week before. Everything really came together the week before competition. Therefore, because of poor seeding, we were eliminated by a top-5 team first round.
+
 
 ## Project Description 
 
