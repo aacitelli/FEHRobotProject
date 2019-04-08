@@ -6,6 +6,10 @@ Overall, the robot performed very well, able to complete a perfect run the major
 
 Given a more exhaustive seeding process, our robot would likely be around 15th out of 66 teams. Unfortunately, we were seeded poorly in the bracket due to our robot not quite being ready for individual competition the week before. Everything really came together the week before competition. Therefore, because of poor seeding, we were eliminated by a top-5 team first round.
 
+## Website
+
+This README focuses heavily on the code-based aspects of the project. For a more comprehensive, overall view of the project, please take a look at our team's website at  u.osu.edu/feh19g1. The website probably won't be available until the course is over.
+
 
 ## Project Description 
 
