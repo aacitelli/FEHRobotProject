@@ -1,0 +1,473 @@
+//* Main Class - Holds main method and main routine 
+main() method 
+{
+    Call function initializing RPS and SD card 
+    Call calibration function 
+    Set servo to default value (30deg) 
+    Wait for touch on screen (this is our final touch) 
+
+    while (light sensor is not on and time limit has not been reached)
+    {
+        Iterate timer system 
+        Give LCD output to tell user program is waiting on start light 
+        Sleep for a short amount of time 
+    }
+
+    Call finalRoutine() function 
+}
+
+finalRoutine() Method 
+{
+    // Navigating to token 
+    Navigate to token drop quickly using calibrated rps coord 
+    Navigate to token drop slowly using calibrated rps coord 
+    Turn really precisely to correct token angle 
+
+    // Dropping the token 
+    while (arm servo's current degree isn't at its lowest)
+    {
+        Move the servo down a little bit 
+        Update the current degree variable
+        Sleep for a little bit of time
+    }
+
+    Sleep for a little bit so token has time to drop and doesn't get flung 
+    Reset servo angle 
+    Sleep for a little bit so servo has time to reset and doesn't get in the way 
+
+    // Going to DDR 
+    Navigate to side of DDR quickly using hardcoded coord
+    Navigate slowly on top of the DDR light 
+
+    // Completing DDR 
+    if (light is blue)
+    {
+        Go above the blue button
+        Turn towards blue button using quick, nonprecise turn function 
+        Drive into the button, making autocorrections to stay on course 
+    }
+
+    else, light is red 
+    {
+        Go above the red button 
+        Turn towards red button using quick, nonprecise turn function 
+        Drive into the button, making autocorrections to stay on course 
+    }
+
+    // RPS button 
+    Go to spot we need to be at for RPS button 
+    Turn really precisely towards RPS button 
+    Push servo down to press RPS button 
+
+    // Getting up ramp 
+    Turn north so that robot doesn't turn into DDR when it tries to go to bottom of ramp 
+    Go to bottom of ramp 
+    Move up the ramp and stop somewhere near the top 
+
+    // Going to and completing foosball 
+    Go to start point for foosball (as calibrated) 
+    Precisely turn so robot is aligned 
+    Press servo down 
+    Go backwards for hard-coded time (approx. end of task) 
+    Lift servo up 
+    Go forward an inch or two 
+    Put servo back down
+    Go backwards for another, shorter hardcoded time to catch stuff minorly off
+    
+    // Getting to lever 
+    Drive forward hardcoded time so that we're not too close to dodecahedron 
+    Go to right below dodecahedron 
+    Go to down-left of dodecahedron 
+    Go up to lever, quickly at first then slower 
+
+    // Lever task 
+    Turn really precisely towards lever 
+    Use servo to press lever 
+    Pull servo up while turning towards end ramp (helps prevent accidental lever undo) 
+
+    // Getting to end button 
+    Navigate to top of ramp 
+    Go down ramp 
+    Navigate into end button 
+}
+
+//* Constants Class - Holds important variables that need to be accessible from everywhere
+Define constants for motors, servo, light sensor 
+Define variables to hold calibrated x, y, heading values 
+Define variables for motor direction sign fixes and percentages 
+Define variables for common motor percent speeds specific to our robot 
+Define variable to keep track of if we're in deadzone k
+Define cache for last valid RPS values 
+
+//* Conversions Class - Used to convert stuff (a loose definition) 
+radianToDegree(radianValue) function 
+{
+    Return passed-in value converted to degrees 
+}
+
+degreeToRadian(degreeValue) function 
+{
+    return passed-in value converted to radians 
+}
+
+rotate180Degrees(degreeValue) function 
+{
+    Return passed-in value 180 degrees off 
+}
+
+//* Navigation Class 
+goToPoint(x-coordinate, y-coordinate, 
+            if it should turn to end heading, what that end heading should be,
+            if it's timed, what that time should be, 
+            if it should go backwards, 
+            speed multiplier) function 
+{
+    // Pre-function checks 
+    If passed-in RPS coords were invalid (-1, -1), return and skip this coord 
+    Loop until valid RPS 
+
+    if (should go forwards)
+        turn to that passed in heading
+
+    // Going backwards 
+    else 
+        turn to 180 degrees from that passed-in heading 
+
+    // Main tolerance check 
+    while (robot is further than specified value from end point)
+    {
+        Update cached RPS values incase we lose RPS in here 
+
+        if (it's timed)
+        {
+            Update timing counts
+            if (it's gone through all its time) 
+            {
+                break out of the tolerance while loop 
+            }
+        }
+
+        if (should go forwards) 
+            calculate desired heading to get to point from current heading 
+
+        // Going backwards 
+        else 
+            calculate desired heading to get to point from (current heading rotated 180 degrees) 
+
+        if (robot heading is far enough off that it needs to autocorrect)
+        {
+            if (robot heading is so far off that it needs to return completely)
+            {
+                Stop motors 
+                Turn towards end point
+            }
+
+            if (should go forwards)
+            {
+                if (turning left is quicker) 
+                {
+                    if (Only a small correction is necessary) 
+                        Make left motor go a little bit slower than right 
+
+                    // A large correction is necessary 
+                    else 
+                        Make left motor go a lot slower than right 
+                }
+
+                // Turning right is quicker 
+                else 
+                {
+                    if (Only a small correction is necessary) 
+                        Make right motor go a little bit slower than left 
+
+                    // A large correction is necessary 
+                    else 
+                        Make right motor go a lot slower than left
+                }                
+            }
+
+            // Going backwards 
+            else 
+            {
+                if (turning left is quicker) 
+                {
+                    if (Only a small correction is necessary) 
+                        Make right motor go a little slower than left 
+
+                    // A large correction is necessary 
+                    else 
+                        Make right motor go a lot slower than left 
+                }
+
+                // Turning right is quicker 
+                else 
+                {
+                    if (Only a small correction is necessary) 
+                        Make left motor go a little slower than right 
+
+                    // A large correction is necessary 
+                    else 
+                        Make left motor go a lot slower than right 
+                }    
+            }
+        }
+
+        // Going in here means it doesn't need to autocorrect 
+        else 
+        {
+            if (should go forwards) 
+            {
+                // Every timed part of course is where we care about precision
+                if (this is timed)
+                    Go forward slow
+
+                if (we're far from end point)
+                    Go forward fast 
+
+                if (we're close to end point)
+                    Go forward slow 
+            }
+
+            // Should go backwards
+            else 
+            {
+                // Every timed part of course is where we care about precision
+                if (this is timed)
+                    Go backwards slow
+
+                if (we're far from end point)
+                    Go backwards fast 
+
+                if (we're close to end point)
+                    Go backwards slow 
+            }
+        }
+
+        // Still in the tolerance check at this point 
+        Sleep for a little bit to give robot time to actually move 
+        Loop until valid rps (ensures tolerance & autocorrection has valid values)
+    }
+
+    // If it got here, it passed the tolerance check or broke out of it 
+    Stop motors
+
+    if (supposed to turn to an end heading) 
+        turn to that end heading 
+}
+
+getBackToRPSFromDeadzone() function 
+{
+    if (it's not right above the dodecahedron) 
+        Use cached RPS heading to turn south based on angle and known motor speeds 
+
+    // Means it's above dodecahedron 
+    else 
+    {
+        Turn the robot east 
+        Drive for a little bit east (hardcoded time) 
+        Turn to south 
+    }
+
+    Drive forward until rps (occurs in both scenarios)
+    Drive forward for half a second more to make sure we're safely inside RPS 
+
+    Stop motors 
+}
+
+turn(endDegree) function 
+{
+    Loop until valid RPS 
+
+    // Tolerance Check 
+    while (robot heading is too far off from end heading)
+    {
+        Update cached RPS values
+
+        if (should turn left) 
+        {
+            if (heading is really far off)
+                Turn left quickly 
+
+            else if (heading is medium far off) 
+                Turn left medium quick 
+
+            // Heading is really close 
+            else 
+                Turn left slow 
+        }
+
+        // Should turn right 
+        else
+        {
+            if (heading is really far off)
+                Turn right quickly 
+
+            else if (heading is medium far off) 
+                Turn right medium quick 
+
+            // Heading is really close 
+            else 
+                Turn right slow 
+        }
+
+        Sleep for a little bit to give robot time to actually move 
+
+        Loop until valid rps so we always check tolerance with up-to-date value 
+    }
+
+    Stop motors
+}
+
+turnToAngleWhenKindaClose(endDegree) function 
+{
+    Loop until valid rps 
+
+    // Note - This angle tolerance is much more restrictive than turn()
+    while (angle is too far off)
+    {
+        if (should turn left)
+            turn left slowly         
+        else 
+            turn right slowly 
+
+        Sleep for very short amount of time 
+        Stop Motors 
+        Sleep 1/3 of a second to give RPS time to catch up 
+
+        Loop until valid RPS 
+    }
+}
+
+turnToAngleWhenAlreadyReallyClose(endDegree) function 
+{
+    Loop until valid rps 
+
+    // Angle tolerance is even more restrictve than turnToAngleWhenKindaClose
+    while (angle is too far off)
+    {
+        if (should turn left) 
+            turn left slowly 
+        else 
+            turn right slowly 
+
+        Sleep for even shorter time than turnToAngleWhenKindaClose
+        Stop motors 
+        Sleep 1/3 of a second to give RPS time to catch yup 
+
+        Loop until valid RPS 
+    }
+}
+
+turnNoRPS(currentHeading, endHeading) function 
+{
+    if (should turn left given start and end heading) 
+        turn left set amount of time given by a constant we measure 
+    else 
+        turn right set amount of time given by a constant we measure 
+}
+
+//* Pre-Test Class 
+init() function 
+{
+    initialize RPS 
+    initialize SD card logging 
+}
+
+calibrate() function 
+{
+    Read in token position on screen touch 
+    Read in far DDR button position on screen touch 
+    Read in rps button position on screen touch 
+    Read in Foosball start position on screen touch 
+    Read in lever position on screen touch 
+}
+
+//* Post-Test Class 
+deinit() function
+{
+    Deinitialize SD card logging
+}
+
+//* Custom Utility Class 
+getDistance(x1, y1, x2, y2) function
+{
+    Return distance between points using distance formula 
+}
+
+rpsIsBad() function 
+{
+    Returns true if rps is currently returning a -1 or -2 
+}
+
+loopWhileNoRps() function 
+{
+    while (rps is a -1 or -2)
+    {
+        sleep for a little bit 
+    }
+}
+
+updateLastValidRPSValues() function 
+{
+    if (RPS.X is valid)
+        Update cached RPS X value 
+    if (RPS.Y is valid) 
+        Update cached RPS Y value
+    if (RPS.Heading is valid) 
+        Update cached RPS heading 
+}
+
+smallestDistanceBetweenHeadings(startHeading, endHeading) function 
+{
+    Calculate clockwise distance between the two headings
+    Calculate counterclockwise distance between the two headings 
+
+    If (clockwise < ccw) 
+        return clockwise 
+    else 
+        return counterclockwise 
+}
+
+getDesiredHeading(x1, y1, x2, y2) 
+{
+    Store change in x in a variable 
+    Store change in y in a variable 
+
+    if (it's in the first quadrant) 
+        Do trig and return a degree value 
+    if (it's in the second quadrant) 
+        Do trig and return a degree value 
+    if (it's in the third quadrant) 
+        Do trig and return a degree value 
+    
+    // Fourth (and last) quadrant 
+    else 
+        Do trig and return a degree value 
+}
+
+gradualServoTurn(float endDegree)
+{
+    while (current degree is less than end degree) 
+    {
+        change servo angle by a little bit 
+        sleep for a little bit 
+    }
+
+    Sleep for a bit then set the servo back to default 
+}
+
+//* RPS.h - Misc. RPS utility functions 
+loopUntilValdiRPS() function 
+{
+    while (rps state is invalid (-1 or -2))
+    {
+        if (rps is -2)
+            return a -2 from function, signifying it's deadzone 
+
+        Sleep for a little bit 
+    }
+
+    Return a 0 to indicate it exited regularly and didn't hit deadzone 
+}
+
+

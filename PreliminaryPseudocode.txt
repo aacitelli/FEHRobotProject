@@ -1,0 +1,46 @@
+// Preliminary Pseudocode 
+"main" method 
+{
+    Wait for light to go off 
+
+    // Token 
+    Rotate vehicle towards base of token machine 
+    Go forward until right in front of token machine
+    Rotate vehicle so that the arm is facing the token aperture
+    Lower arm until the token goes out, falling into the aperture 
+    Return arm to default angle (so it doesn't clip into anything)
+
+    // DDR 
+    Turn towards closest DDR light 
+    Drive to closest DDR light, positioning sensor on top 
+    Stop over DDR light
+    Sense which light color
+    If red, go in front of the red light
+    If blue, go in front of the blue light
+    Lower arm so that it's button level 
+    Drive forward to press button, holding it down for a while to get secondary
+
+    // RPS button
+    Turn towards position for RPS button
+    Go to postiion for RPS button
+    Turn so arm is facing RPS button 
+    Lower arm, press and hold RPS button 
+
+    // Foosball 
+    Go up ramp until you hit a certain RPS threshold 
+    Go to foosball, positioning robot far enough away so that claw can sit on top 
+    Press arm down on score counters
+    Back up until a hardcoded RPS-x coordinate is reached (end of foosball) 
+    Pull servo back up 
+
+    // Lever
+    Turn towards lever 
+    Go to lever
+    Rotate towards lever 
+    Push down lever using arm servo 
+
+    // Ramp & End Button 
+    Rotate vehicle towards closer, steeper ramp 
+    Move down ramp 
+    Drive into final button 
+}
