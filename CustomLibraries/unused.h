@@ -1,4 +1,0 @@
-#ifndef UNUSEDFUNCTIONS_H
-#define UNUSEDFUNCTIONS_H
-
-#endif

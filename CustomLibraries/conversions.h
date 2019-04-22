@@ -11,7 +11,7 @@ using namespace std;
 float radianToDegree(float radianValue) { return radianValue * (180.0 / PI); }
 float degreeToRadian(float degreeValue) { return degreeValue * (PI / 180.0); }
 
-// If there's distance between QR code and centroid, this is implemented into the relevant functions 
+// If there's distance between QR code and centroid, this is implemented into the relevant functions
 float rpsXToCentroidX()
 {
     // 0 Degrees (Inclusive) to 90 Degrees (Exclusive)
@@ -31,7 +31,7 @@ float rpsXToCentroidX()
         return RPS.X() + (DISTANCE_BETWEEN_RPS_AND_CENTROID * sin(degreeToRadian(RPS.Heading() - 270)));
 }
 
-// If there's distance between QR code and centroid, this is implemented into the relevant functions 
+// If there's distance between QR code and centroid, this is implemented into the relevant functions
 float rpsYToCentroidY()
 {
     // 0 Degrees (Inclusive) to 90 Degrees (Exclusive)
