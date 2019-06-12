@@ -4,7 +4,7 @@
 
 This is the codebase for a 3-month-long project completed as part of ENGR 1281.02H (Fundamentals of Engineering for Honors II - Robotics), a project class in Ohio State's College of Engineering Honors Program. 
 
-Videos and pictures of the project as well as more extensive documentation can be found on our team's official website, located at https://andenacitelli.com/robotproject (website not yet written - I should be able to get around to it at some point during Fall 2019 semester). 
+There was an official website completed as part of the project, but is inaccessible without an Ohio State account, so I made a website to highlight the project on my own. Videos and pictures of the project as well as more documentation can be found on my website, located at https://andenacitelli.com/robotproject (Note: The website is not yet written, but I plan to build it sometime Fall 2019). 
 
 ## Project Description 
 
