@@ -1,14 +1,17 @@
 # Robot Project
 
-This is the codebase for a 3-month-long project completed as part of ENGR 1281.02H (Fundamentals of Engineering for Honors II - Robotics), a project class in Ohio State's College of Engineering Honors Program. Videos and pictures of the project as well as more extensive documentation can be found on our team's official website, located at <URL>. 
+## Overview
+
+This is the codebase for a 3-month-long project completed as part of ENGR 1281.02H (Fundamentals of Engineering for Honors II - Robotics), a project class in Ohio State's College of Engineering Honors Program. 
+
+Videos and pictures of the project as well as more extensive documentation can be found on our team's official website, located at https://andenacitelli.com/robotproject (website currently not done - Should be done by the end of Fall 2019 Semester). 
 
 Overall, the robot performed very well, able to complete a perfect run the majority of the time. Occasional consistency issues accounted for the rest of the time, where we would usually get 80-90% of the points. 
 
-Given a more exhaustive seeding process, our robot would likely be around 15th out of 66 teams. Unfortunately, we were seeded poorly in the bracket due to our robot not quite being ready for individual competition the week before. Everything really came together the week before competition. Therefore, because of poor seeding, we were eliminated by a top-5 team first round.
 
-## Website
+## Competition and End-Of-Project Results 
 
-This README focuses heavily on the code-based aspects of the project. For a more comprehensive, overall view of the project, please take a look at our team's website at  u.osu.edu/feh19g1. The website probably won't be available until the course is over.
+We made an incredible amount of progress in the week before the competion; If the seeding process had taken that into account, we probably would have made it to top 16 in the bracket, as we were semi-consistently getting perfect runs in about a minute, something maybe only 15 out of the 66 teams was able to do. However, we were seeded very poorly and put up against a top-4 team first round, and subsequently were eliminated. 
 
 
 ## Project Description 
@@ -17,9 +20,9 @@ Each team, made of 4 people, was to conceive, design, build, and program a small
 
 ### Team Members' Roles
 
-Anden - Wrote the code, with Jason helping out with one of the performance tests and some very early code. Did all the testing. Was responsible for making sure the robot performed well on-course during performance tests and the competition itself. 
+Anden - Wrote the code, with Jason helping out briefly with one of the performance tests and some very early code. Was responsible for making sure the robot performed well on-course during performance tests and during the competition itself. 
 
-Jason - Built most of the robot itself and fixed most of the mechanical or construction issues we had. Occasionally helped with the code and with debugging. Worked some on documentation, report-writing, and the website. 
+Jason - Did most of the construction and fixed most mechanical issues. Occasionally helped with the code and with debugging. Worked some on documentation, report-writing, and the website. 
 
 Joe - Worked heavily on documentation, report-writing, and the website, alongside helping often with testing. 
 
