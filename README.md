@@ -4,15 +4,7 @@
 
 This is the codebase for a 3-month-long project completed as part of ENGR 1281.02H (Fundamentals of Engineering for Honors II - Robotics), a project class in Ohio State's College of Engineering Honors Program. 
 
-Videos and pictures of the project as well as more extensive documentation can be found on our team's official website, located at https://andenacitelli.com/robotproject (website currently not done - Should be done by the end of Fall 2019 Semester). 
-
-Overall, the robot performed very well, able to complete a perfect run the majority of the time. Occasional consistency issues accounted for the rest of the time, where we would usually get 80-90% of the points. 
-
-
-## Competition and End-Of-Project Results 
-
-We made an incredible amount of progress in the week before the competion; If the seeding process had taken that into account, we probably would have made it to top 16 in the bracket, as we were semi-consistently getting perfect runs in about a minute, something maybe only 15 out of the 66 teams was able to do. However, we were seeded very poorly and put up against a top-4 team first round, and subsequently were eliminated. 
-
+Videos and pictures of the project as well as more extensive documentation can be found on our team's official website, located at https://andenacitelli.com/robotproject (website not yet written - I should be able to get around to it at some point during Fall 2019 semester). 
 
 ## Project Description 
 
@@ -27,6 +19,14 @@ Jason - Did most of the construction and fixed most mechanical issues. Occasiona
 Joe - Worked heavily on documentation, report-writing, and the website, alongside helping often with testing. 
 
 Keely - Worked heavily on documentation, report-writing, and the website. Did the CAD models for the robot. 
+
+## Competition and End-Of-Project Results 
+
+By the end of the project, the robot performed very well, able to complete a perfect run about 60% of the time. Occasional consistency issues accounted for the rest of the runs, where we would usually get 80-90% of the points. Only about ~20 teams out of the total 66 were able to complete a perfect run by the end of the project. Our runs took about 1:10, which was faster than maybe 6-7 of those teams, leaving us as something like the ~8-9th best robot (estimate). 
+
+We made an incredible amount of progress in the week before the competion. However, we were seeded very poorly, as seeding was done a full week beforehand, and we were put up against a top-4 team first round and subsequently eliminated despite a near-perfect run. 
+
+We also won two out of our three round-robin tournament runs. Our first run was a win, where we didn't have a perfect run but performed very well, beating everyone else out. Our second run was also a win, which was also almost a perfect run but stopped just short of the end button due to an error I never figured out, but tracing the logs, the microcontroller must have lost power unexpectedly. Our last run highlighted a fault in our code where our calibration procedure could accept invalid GPS coordinates, which allowed us to fix that for our more important tournament runs. Overall, we were very happy with our round-robin results. 
 
 ## Technical Specifications 
 
